@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}View Loom - Loom Management System{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f8f9fa;
+        padding: 20px;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th, td {
+        border: 1px solid #333;
+        padding: 10px 12px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 15px;
+    }
+
+    th {
+        background: #e9ecef;
+        font-weight: bold;
+    }
+
+    th.color-group {
+        background: #dfe6f0;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    img.saree-thumb {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .color-box {
+        width: 35px;
+        height: 35px;
+        display: inline-block;
+        border: 1px solid #333;
+        border-radius: 5px;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .download-btn {
+        display: block;
+        margin: 25px auto;
+        padding: 12px 20px;
+        border: none;
+        background: #007bff;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 6px;
+        text-decoration: none;
+        text-align: center;
+        width: 220px;
+        transition: background 0.3s;
+    }
+
+    .download-btn:hover {
+        background: #0056b3;
+    }
+
+    .add-saree-btn {
+        display: inline-block;
+        padding: 10px 18px;
+        background: #28a745;
+        color: white !important;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background 0.3s, transform 0.2s;
+    }
+
+    .add-saree-btn:hover {
+        background: #218838;
+        transform: scale(1.05);
+    }
+
+    .add-saree-btn::before {
+        content: "➕ ";
+    }
+
+    @media (max-width: 768px) {
+        table, thead, tbody, th, td, tr {
+            font-size: 13px;
+        }
+        img.saree-thumb {
+            width: 60px;
+            height: 60px;
+        }
+        .color-box {
+            width: 25px;
+            height: 25px;
+        }
+    }
+</style>
+
+<h2>{{ loom.weaver_name }} - Loom No: {{ loom.loom_no }}</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th rowspan="3">Saree No</th>
+            <th rowspan="3">Date</th>
+            <th rowspan="3">Name of Saree</th>
+            <th rowspan="3">Image</th>
+            <th colspan="6" class="color-group">Color Details</th>
+            <th rowspan="3">Amount Credit (₹)</th>
+            <th rowspan="3">Amount Debit (₹)</th>
+            <th rowspan="3">Balance (₹)</th>
+            <th rowspan="3">Actions</th>
+        </tr>
+        <tr>
+            <th rowspan="2">Border</th>
+            <th rowspan="2">Body</th>
+            <th colspan="4">Meena</th>
+        </tr>
+        <tr>
+            <th>m-A</th>
+            <th>m-B</th>
+            <th>m-C</th>
+            <th>m-D</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for saree in sarees %}
+        <tr>
+            <td>{{ saree.saree_number }}</td>
+            <td>{{ saree.date.strftime('%d-%m-%Y') if saree.date else '-' }}</td>
+            <td>{{ saree.saree_name or '-' }}</td>
+
+            <!-- Image -->
+            <td>
+                {% if saree.saree_image %}
+                    <a href="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}" target="_blank">
+                        <img src="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}" alt="Saree Image" class="saree-thumb">
+                    </a>
+                {% else %}
+                    <span>No Image</span>
+                {% endif %}
+            </td>
+
+            <!-- Border -->
+            <td>
+                {% if saree.border_color %}
+                    <span class="color-box" style="background-color: {{ saree.border_hex or all_colors.get(saree.border_color, '#fff') }};"></span>
+                    {{ saree.border_color }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Body -->
+            <td>
+                {% if saree.body_color %}
+                    <span class="color-box" style="background-color: {{ saree.body_hex or all_colors.get(saree.body_color, '#fff') }};"></span>
+                    {{ saree.body_color }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Meena A -->
+            <td>
+                {% if saree.meena_a %}
+                    <span class="color-box" style="background-color: {{ saree.meena_a_hex or all_colors.get(saree.meena_a, '#fff') }};"></span>
+                    {{ saree.meena_a }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Meena B -->
+            <td>
+                {% if saree.meena_b %}
+                    <span class="color-box" style="background-color: {{ saree.meena_b_hex or all_colors.get(saree.meena_b, '#fff') }};"></span>
+                    {{ saree.meena_b }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Meena C -->
+            <td>
+                {% if saree.meena_c %}
+                    <span class="color-box" style="background-color: {{ saree.meena_c_hex or all_colors.get(saree.meena_c, '#fff') }};"></span>
+                    {{ saree.meena_c }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Meena D -->
+            <td>
+                {% if saree.meena_d %}
+                    <span class="color-box" style="background-color: {{ saree.meena_d_hex or all_colors.get(saree.meena_d, '#fff') }};"></span>
+                    {{ saree.meena_d }}
+                {% else %}-{% endif %}
+            </td>
+
+            <!-- Amounts -->
+            <td>{{ '%.2f'|format(saree.amount_credit or 0) }}</td>
+            <td>{{ '%.2f'|format(saree.amount_debit or 0) }}</td>
+            <td>{{ '%.2f'|format((saree.amount_credit or 0) - (saree.amount_debit or 0)) }}</td>
+
+            <!-- Actions -->
+            <td>
+                <a href="{{ url_for('loom.edit_saree', loom_id=loom.id, saree_id=saree.id) }}">Edit</a>
+            </td>
+        </tr>
+        {% endfor %}
+
+        {% if sarees|length < loom.num_sarees %}
+        <tr>
+            <td colspan="14">
+                <a href="{{ url_for('loom.add_saree', loom_id=loom.id) }}" class="add-saree-btn">Add Saree</a>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('loom.download', loom_id=loom.id) }}" class="download-btn">⬇️ Download CSV</a>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Add Weft - BBBS Management{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg p-4" style="max-width: 700px; margin: auto;">
+        <h3 class="text-center mb-4 text-success fw-bold">Add Weft Details for Loom {{ loom.loom_no }}</h3>
+
+        <form method="POST" action="{{ url_for('loom.add_weft', loom_id=loom.id) }}">
+            <div class="mb-3">
+                <label for="date" class="form-label fw-semibold">Date</label>
+                <input type="date" id="date" name="date" class="form-control" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="zari" class="form-label fw-semibold">Zari</label>
+                    <input type="text" id="zari" name="zari" class="form-control" placeholder="Enter zari details" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="silk" class="form-label fw-semibold">Silk </label>
+                    <input type="text" id="silk" name="silk" class="form-control" placeholder="Enter silk details" required>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('loom.materials', loom_id=loom.id) }}" class="btn btn-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-success px-4 fw-semibold">Add Weft</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Create Loom{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>
+        {% if weaver %}
+            Create Loom for {{ weaver.name }}
+        {% else %}
+            Create Loom
+        {% endif %}
+    </h2>
+
+    <div class="card shadow-sm p-4">
+        <form method="POST" 
+              action="{% if weaver %}{{ url_for('loom.create_loom', weaver_id=weaver.id) }}{% else %}{{ url_for('loom.create_loom') }}{% endif %}">
+
+            <div class="form-group">
+    <label for="weaver_name">Weaver Name</label>
+    <input type="text" class="form-control" name="weaver_name" placeholder="Enter Weaver Name">
+</div>
+
+
+
+            <!-- Loom Type -->
+            <div class="mb-3">
+                <label class="form-label">Loom</label>
+                <select name="loom_type" class="form-select" required>
+                    <option value="">-- Select Loom --</option>
+                    <option value="Handloom">Handloom</option>
+                    <option value="Powerloom">Powerloom</option>
+                </select>
+            </div>
+
+            <!-- Number of Sarees -->
+            <div class="mb-3">
+                <label class="form-label">Number of Sarees</label>
+                <input type="number" name="num_sarees" class="form-control" placeholder="Enter number of sarees" required>
+            </div>
+
+            <!-- Type of Saree -->
+            <div class="mb-3">
+                <label class="form-label">Type of Saree</label>
+                <input type="text" name="saree_type" class="form-control" placeholder="e.g. Silk, Cotton, etc." required>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex justify-content-between">
+                {% if weaver %}
+                    <a href="{{ url_for('weaver.view_weaver', id=weaver.id) }}" class="btn btn-secondary">Cancel</a>
+                {% else %}
+                    <a href="{{ url_for('loom.looms') }}" class="btn btn-secondary">Cancel</a>
+                {% endif %}
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i> Create
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

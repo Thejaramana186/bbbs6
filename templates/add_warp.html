@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Add Warp Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Add Warp Details</h5>
+            <a href="{{ url_for('loom.materials', loom_id=loom_id) }}" class="btn btn-light btn-sm">Back</a>
+
+        </div>
+
+        <div class="card-body">
+            <form action="{{ url_for('loom.add_warp', loom_id=loom_id) }}" method="POST">
+
+                <!-- Zari Section -->
+                <h6 class="text-primary mb-3 mt-2">Zari Details</h6>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="zari_border_left" class="form-label">Border (L)</label>
+                        <input type="text" class="form-control" id="zari_border_left" name="zari_border_left" placeholder="Enter Zari Left Border">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="zari_border_right" class="form-label">Border (R)</label>
+                        <input type="text" class="form-control" id="zari_border_right" name="zari_border_right" placeholder="Enter Zari Right Border">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="zari_body" class="form-label">Body</label>
+                        <input type="text" class="form-control" id="zari_body" name="zari_body" placeholder="Enter Zari Body">
+                    </div>
+                </div>
+
+                <!-- Silk Section -->
+                <h6 class="text-primary mb-3 mt-4">Silk Details</h6>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="silk_border_left" class="form-label">Border (L)</label>
+                        <input type="text" class="form-control" id="silk_border_left" name="silk_border_left" placeholder="Enter Silk Left Border">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="silk_border_right" class="form-label">Border (R)</label>
+                        <input type="text" class="form-control" id="silk_border_right" name="silk_border_right" placeholder="Enter Silk Right Border">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="silk_body" class="form-label">Body</label>
+                        <input type="text" class="form-control" id="silk_body" name="silk_body" placeholder="Enter Silk Body">
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success px-4">Save Warp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+
+{% extends "base.html" %}
+
+{% block title %}Weaver - Loom Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user-friends me-2"></i>Weavers</h2>
+    <a href="{{ url_for('weaver.create_weaver') }}" class="btn btn-success">
+        <i class="fas fa-plus me-1"></i>Add Weaver
+    </a>
+</div>
+
+{% if weavers %}
+<div class="row">
+    {% for weaver in weavers %}
+    <div class="col-md-3 col-lg-3 mb-4">
+        <div class="card weaver-card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ weaver.weavername }}</h5>
+                <p class="card-text text-muted">
+                    <i class="fas fa-phone me-1"></i>{{ weaver.phonenumber }}
+                </p>
+                <div class="mt-3">
+                    {% if weaver.aadharcard %}
+                        <span class="badge bg-success mb-2">
+                            <i class="fas fa-file me-1"></i>Document Uploaded
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning mb-2">
+                            <i class="fas fa-exclamation-triangle me-1"></i>No Document
+                        </span>
+                    {% endif %}
+                </div>
+                <small class="text-muted d-block mb-3">
+                    Created: {{ weaver.created_at.strftime('%Y-%m-%d') }}
+                </small>
+                <div class="btn-group w-100" role="group">
+                    <a href="{{ url_for('weaver.view_weaver', id=weaver.id) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <a href="{{ url_for('weaver.edit_weaver', id=weaver.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No weavers found</h4>
+    <p class="text-muted">Create your first weaver to get started</p>
+    <a href="{{ url_for('weaver.create_weaver') }}" class="btn btn-success">
+        <i class="fas fa-plus me-1"></i>Create First Weaver
+    </a>
+</div>
+{% endif %}
+{% endblock %}

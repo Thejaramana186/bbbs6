@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Saree - Loom Management System{% endblock %}
+
+{% block content %}
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+/>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        font-family: 'Poppins', sans-serif;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        background: #fff;
+    }
+    .card-header {
+        background: linear-gradient(90deg, #007bff, #00aaff);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+        padding: 20px;
+    }
+    .card-header h2 {
+        margin: 0;
+        font-weight: 600;
+    }
+    label {
+        font-weight: 500;
+        margin-top: 10px;
+        color: #333;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    input[type="file"] {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 10px;
+        width: 100%;
+        transition: all 0.3s;
+    }
+    input:focus,
+    select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 4px rgba(0,123,255,0.3);
+        outline: none;
+    }
+    .color-preview {
+        width: 45px;
+        height: 45px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    .current-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .current-image img:hover {
+        transform: scale(1.05);
+    }
+    .btn-primary {
+        background: linear-gradient(90deg, #007bff, #00aaff);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 25px;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(90deg, #0069d9, #0088cc);
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="card mx-auto" style="max-width: 900px;">
+        <div class="card-header">
+            <h2>Edit Saree - Loom No: {{ loom.loom_no }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="saree_number">Saree Number</label>
+                        <input type="number" name="saree_number" id="saree_number"
+                            class="form-control" value="{{ saree.saree_number or '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="saree_name">Saree Name</label>
+                        <input type="text" name="saree_name" id="saree_name"
+                            class="form-control" value="{{ saree.saree_name or '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="border_color">Border Color</label>
+                        <select name="border_color" id="border_color" class="form-select" onchange="updateColorPreview('border_color')">
+                            <option value="">-- Select Border Color --</option>
+                            {% for color_name, color_code in all_colors.items() %}
+                                <option value="{{ color_name }}" style="background-color: {{ color_code }};"
+                                    {% if saree.border_color == color_name %}selected{% endif %}>
+                                    {{ color_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="color-preview mt-2" id="border_color_preview"
+                             style="background-color: {{ all_colors.get(saree.border_color, '#fff') }}"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="body_color">Body Color</label>
+                        <select name="body_color" id="body_color" class="form-select" onchange="updateColorPreview('body_color')">
+                            <option value="">-- Select Body Color --</option>
+                            {% for color_name, color_code in all_colors.items() %}
+                                <option value="{{ color_name }}" style="background-color: {{ color_code }};"
+                                    {% if saree.body_color == color_name %}selected{% endif %}>
+                                    {{ color_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="color-preview mt-2" id="body_color_preview"
+                             style="background-color: {{ all_colors.get(saree.body_color, '#fff') }}"></div>
+                    </div>
+
+                    
+
+                    <div class="col-md-6">
+                        <label for="completion_date">Completion Date</label>
+                        <input type="date" name="completion_date" id="completion_date" class="form-control"
+                            value="{{ saree.completion_date.strftime('%Y-%m-%d') if saree.completion_date else '' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="amount_credit">Amount Credit (₹)</label>
+                        <input type="number" step="0.01" name="amount_credit" id="amount_credit" class="form-control"
+                            value="{{ saree.amount_credit or 0 }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="amount_debit">Amount Debit (₹)</label>
+                        <input type="number" step="0.01" name="amount_debit" id="amount_debit" class="form-control"
+                            value="{{ saree.amount_debit or 0 }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="saree_image">Upload Image</label>
+                        <input type="file" name="saree_image" id="saree_image" class="form-control">
+                        <small class="text-muted">Allowed: PNG, JPG, JPEG, GIF, PDF</small>
+                        {% if saree.saree_image %}
+                        <div class="current-image mt-2">
+                            <small>Current Image:</small><br>
+                            <a href="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}" target="_blank">
+                                <img src="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}" alt="Saree Image">
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 gap-3">
+                    <a href="{{ url_for('loom.view_loom', loom_id=loom.id) }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update Saree</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateColorPreview(id) {
+        const select = document.getElementById(id);
+        const preview = document.getElementById(id + "_preview");
+        const color = select.options[select.selectedIndex].style.backgroundColor;
+        preview.style.backgroundColor = color || "#fff";
+    }
+</script>
+{% endblock %}

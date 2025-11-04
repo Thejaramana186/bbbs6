@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Looms - Loom Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tools me-2"></i>Loom Records</h2>
+    <a href="{{ url_for('loom.create_loom') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Add Loom
+    </a>
+</div>
+
+{% if looms %}
+<div class="row">
+    {% for loom in looms %}
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm h-100 text-center p-3">
+            <h5 class="card-title">Loom No: {{ loom.loom_no }}</h5>
+            <p><strong>Weaver:</strong> {{ loom.weaver_name or "No Weaver" }}</p>
+
+            <div class="d-flex justify-content-center gap-2 mt-3">
+                <!-- View Loom Button -->
+                <a href="{{ url_for('loom.view_loom', loom_id=loom.id) }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye"></i> View
+                </a>
+
+                <!-- Add Saree Button -->
+                <a href="{{ url_for('loom.add_saree', loom_id=loom.id) }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus"></i> Add Saree
+                </a>
+
+                <!-- Materials Button -->
+                <a href="{{ url_for('loom.materials', loom_id=loom.id) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-boxes"></i> Materials
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No loom records found</h4>
+    <p class="text-muted">Create your first loom record to get started</p>
+    <a href="{{ url_for('loom.create_loom') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Create First Loom
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Add Saree - Loom Management System{% endblock %}
+
+{% block content %}
+<style>
+    .card {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 25px 30px;
+    }
+    .card h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .form-group {
+        flex: 1;
+        min-width: 220px;
+    }
+    label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+        color: #444;
+    }
+    input, select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    input[type="file"] {
+        padding: 4px;
+    }
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: #007bff;
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    button:hover {
+        background: #0056b3;
+    }
+    .note {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+    .section-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #007bff;
+        margin-top: 25px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 4px;
+    }
+</style>
+
+<div class="card">
+    <h2>➕ Add Saree for Loom No: {{ loom.loom_no }}</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <!-- Saree Info -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="saree_number">Saree No</label>
+                <input type="text" name="saree_number" id="saree_number" placeholder="Auto or enter manually">
+            </div>
+            <div class="form-group">
+                <label for="saree_name">Saree Name</label>
+                <input type="text" name="saree_name" id="saree_name" placeholder="Enter Saree Name">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+
+        <!-- Color Section -->
+        <div class="section-title">Color Details</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="border_color">Border Color</label>
+                <select name="border_color" id="border_color" required>
+                    <option value="">-- Select Border Color --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="body_color">Body Color</label>
+                <select name="body_color" id="body_color" required>
+                    <option value="">-- Select Body Color --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Meena Colors -->
+        <div class="section-title">Meena Colors</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="meena_a">Meena A</label>
+                <select name="meena_a" id="meena_a">
+                    <option value="">-- Select Meena A --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="meena_b">Meena B</label>
+                <select name="meena_b" id="meena_b">
+                    <option value="">-- Select Meena B --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="meena_c">Meena C</label>
+                <select name="meena_c" id="meena_c">
+                    <option value="">-- Select Meena C --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="meena_d">Meena D</label>
+                <select name="meena_d" id="meena_d">
+                    <option value="">-- Select Meena D --</option>
+                    {% for color_name, color_code in all_colors.items() %}
+                        <option value="{{ color_name }}" style="background-color: {{ color_code }}; color: #000;">
+                            {{ color_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Amounts -->
+        <div class="section-title">Amount Details</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="amount_credit">Amount Credit (₹)</label>
+                <input type="number" step="0.01" name="amount_credit" id="amount_credit" placeholder="₹ 0.00">
+            </div>
+            <div class="form-group">
+                <label for="amount_debit">Amount Debit (₹)</label>
+                <input type="number" step="0.01" name="amount_debit" id="amount_debit" placeholder="₹ 0.00">
+            </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="section-title">Saree Image</div>
+
+        <div class="form-group">
+            <label for="saree_image">Upload Saree Image</label>
+            <input type="file" name="saree_image" id="saree_image" accept="image/*">
+            <p class="note">Allowed: PNG, JPG, JPEG, GIF</p>
+        </div>
+
+        <button type="submit">Add Saree</button>
+    </form>
+</div>
+{% endblock %}
