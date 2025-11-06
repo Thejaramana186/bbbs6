@@ -48,6 +48,17 @@ class Loom(db.Model):
         debit = float(self.amount_debit or 0)
         return credit - debit
 
+    @property
+    def remaining_sarees(self):
+        """
+        Calculates how many sarees are still left to be added
+        for this loom based on saree_entries count.
+        """
+        try:
+            return max(self.num_sarees - len(self.saree_entries), 0)
+        except Exception:
+            return 0
+
     def __repr__(self):
         return f"<Loom No: {self.loom_no} ({self.loom_type}) - Weaver: {self.weaver_name}>"
 
