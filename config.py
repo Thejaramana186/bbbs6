@@ -1,39 +1,31 @@
 import os
-from datetime import timedelta
+from dotenv import load_dotenv
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
-    # Database Configuration → Always SQLite
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'loom_management.db')
+    # -------------------------------------------------
+    # General Flask Config
+    # -------------------------------------------------
+    SECRET_KEY = os.getenv('SECRET_KEY', 'supersecretkey')
+
+    # -------------------------------------------------
+    # Database Configuration (PostgreSQL on AWS RDS)
+    # -------------------------------------------------
+    DB_USER = os.getenv('DB_USER')
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+    DB_HOST = os.getenv('DB_HOST')
+    DB_PORT = os.getenv('DB_PORT')
+    DB_NAME = os.getenv('DB_NAME')
+
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Database engine options (safe defaults for SQLite)
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True
-    }
-    
-    # File Upload Configuration
-    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'static/uploads'
-    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB
-    
-    # Session Configuration
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
-    
-    # Flask Configuration
-    FLASK_ENV = os.environ.get('FLASK_ENV', 'development')
-    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-class ProductionConfig(Config):
-    DEBUG = False
-    
-config = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig,
-    'default': DevelopmentConfig
-}
+    # -------------------------------------------------
+    # Optional Config (for migrations, debugging, etc.)
+    # -------------------------------------------------
+    DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
