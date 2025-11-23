@@ -1766,7 +1766,7 @@ def add_saree(loom_id):
         try:
             # ---------------------- Parse Dates ---------------------- #
             date_str = request.form.get("date")
-            saree_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
+            saree_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else date.today()
 
             completion_date_str = request.form.get("completion_date")
             completion_date = datetime.strptime(completion_date_str, "%Y-%m-%d").date() if completion_date_str else None
@@ -1779,7 +1779,7 @@ def add_saree(loom_id):
 
             # ---------------------- Auto Saree Number ---------------------- #
             last_saree_number = db.session.query(func.max(SareeEntry.saree_number)) \
-                .filter_by(loom_id=loom.id).scalar()
+                                        .filter_by(loom_id=loom.id).scalar()
             saree_number = (last_saree_number or 0) + 1
 
             # ---------------------- Create Saree Entry ---------------------- #
@@ -1790,7 +1790,6 @@ def add_saree(loom_id):
                 border_color=request.form.get("border_color"),
                 body_color=request.form.get("body_color"),
 
-                # ✅ Meena Colors (Names + HEX)
                 meena_a=request.form.get("meena_a"),
                 meena_a_hex=request.form.get("meena_a_hex"),
                 meena_b=request.form.get("meena_b"),
@@ -1800,24 +1799,46 @@ def add_saree(loom_id):
                 meena_d=request.form.get("meena_d"),
                 meena_d_hex=request.form.get("meena_d_hex"),
 
-                # ✅ Other details
                 warp_weft=request.form.get("warp_weft"),
                 material=request.form.get("material"),
+
                 amount_credit=float(request.form.get("amount_credit") or 0),
                 amount_debit=float(request.form.get("amount_debit") or 0),
+
                 date=saree_date,
                 completion_date=completion_date
             )
 
-            # ---------------------- Handle File Upload ---------------------- #
+            # ---------------------- File Upload ---------------------- #
             file = request.files.get("saree_image")
             filename = save_file(file)
             if filename:
                 saree.saree_image = filename
 
-            # ---------------------- Save to Database ---------------------- #
             db.session.add(saree)
             db.session.commit()
+
+            # ---------------------- AUTO PAYMENT ENTRY ---------------------- #
+            if saree.amount_debit > 0:
+                try:
+                    payment = Payment(
+                        date=saree_date,
+                        description=f"Saree {saree.saree_number} added to {loom.loom_type} (Loom {loom.loom_no})",
+                        amount=saree.amount_debit,
+                        payment_type="debit",
+                        loom_id=loom.id,
+                        saree_id=saree.id,
+
+                        # keeping for backend consistency (though UI no longer groups by loom_type)
+                        loom_type=loom.loom_type.lower() if loom.loom_type else None
+                    )
+
+                    db.session.add(payment)
+                    db.session.commit()
+
+                except Exception as e:
+                    db.session.rollback()
+                    print("Auto Payment Insert Failed:", e)
 
             flash("✅ New saree added successfully!", "success")
             return redirect(url_for("loom.view_loom", loom_id=loom.id))
@@ -1826,7 +1847,6 @@ def add_saree(loom_id):
             db.session.rollback()
             flash(f"⚠️ Failed to add saree: {e}", "danger")
 
-    # ---------------------- Render Template ---------------------- #
     return render_template(
         "add_saree.html",
         loom=loom,
@@ -1941,3 +1961,40 @@ def download(loom_id):
         download_name=f"loom_{loom_id}.csv",
         mimetype="text/csv"
     )
+
+
+
+# -------------------------------------------
+# EXTRA LOOM CATEGORY ROUTES
+# -------------------------------------------
+
+@loom_bp.route("/handlooms")
+@login_required
+def handlooms():
+    looms = Loom.query.filter_by(
+        user_id=current_user.id,
+        loom_type="Handloom"
+    ).order_by(Loom.created_at.desc()).all()
+    return render_template("handlooms.html", looms=looms)
+
+
+@loom_bp.route("/powerlooms")
+@login_required
+def powerlooms():
+    looms = Loom.query.filter_by(
+        user_id=current_user.id,
+        loom_type="Powerloom"
+    ).order_by(Loom.created_at.desc()).all()
+    return render_template("powerlooms.html", looms=looms)
+
+
+@loom_bp.route("/outsidelooms")
+@login_required
+def outsidelooms():
+    looms = Loom.query.filter_by(
+        user_id=current_user.id,
+        loom_type="Outsideloom"
+    ).order_by(Loom.created_at.desc()).all()
+    return render_template("outsidelooms.html", looms=looms)
+
+

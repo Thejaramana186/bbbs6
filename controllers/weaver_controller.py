@@ -45,6 +45,12 @@ def create_weaver():
             address = request.form.get('address', '')
             skills = request.form.get('skills', '')
 
+            # BANK DETAILS
+            account_number = request.form.get('account_number')
+            ifsc_code = request.form.get('ifsc_code')
+            account_type = request.form.get('account_type')
+            name_in_bank = request.form.get('name_in_bank')
+
             if not weavername or not phonenumber:
                 flash('Weaver name and phone number are required.', 'error')
                 return render_template('create_weaver.html')
@@ -69,8 +75,15 @@ def create_weaver():
                 address=address,
                 skills=skills,
                 aadharcard=aadharcard_path,
-                user_id=current_user.id
+                user_id=current_user.id,
+
+                # SAVE BANK DETAILS
+                account_number=account_number,
+                ifsc_code=ifsc_code,
+                account_type=account_type,
+                name_in_bank=name_in_bank
             )
+
             db.session.add(weaver)
             db.session.commit()
 
@@ -111,6 +124,12 @@ def edit_weaver(id):
             weaver.address = request.form.get('address', '')
             weaver.skills = request.form.get('skills', '')
             weaver.is_active = 'is_active' in request.form
+
+            # BANK DETAILS UPDATE
+            weaver.account_number = request.form.get('account_number')
+            weaver.ifsc_code = request.form.get('ifsc_code')
+            weaver.account_type = request.form.get('account_type')
+            weaver.name_in_bank = request.form.get('name_in_bank')
 
             if not weaver.weavername or not weaver.phonenumber:
                 flash('Weaver name and phone number are required.', 'error')

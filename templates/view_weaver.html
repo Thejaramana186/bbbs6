@@ -12,9 +12,11 @@
                 {% if weaver.is_active %}Deactivate{% else %}Activate{% endif %}
             </button>
         </form>
+
         <a href="{{ url_for('weaver.edit_weaver', id=weaver.id) }}" class="btn btn-warning me-2">
             <i class="fas fa-edit me-1"></i>Edit
         </a>
+
         <a href="{{ url_for('weaver.weaver') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-1"></i>Back to List
         </a>
@@ -22,18 +24,22 @@
 </div>
 
 <div class="row">
-    <!-- LEFT: Personal Info -->
+
+    <!-- PERSONAL INFORMATION CARD -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
             </div>
+
             <div class="card-body">
                 <div class="row">
+
                     <div class="col-12 mb-3">
                         <label class="form-label"><strong>Weaver ID:</strong></label>
                         <p>WEAV-{{ weaver.id }}</p>
                     </div>
+
                     <div class="col-12 mb-3">
                         <label class="form-label"><strong>Weaver Name:</strong></label>
                         <p>
@@ -45,6 +51,7 @@
                             {% endif %}
                         </p>
                     </div>
+
                     <div class="col-12 mb-3">
                         <label class="form-label"><strong>Phone Number:</strong></label>
                         <p><a href="tel:{{ weaver.phonenumber }}">{{ weaver.phonenumber }}</a></p>
@@ -68,7 +75,8 @@
                         <label class="form-label"><strong>Aadhar Card:</strong></label>
                         {% if weaver.aadharcard %}
                             <p>
-                                <a href="{{ url_for('static', filename='uploads/' + weaver.aadharcard) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ url_for('static', filename='uploads/' + weaver.aadharcard) }}"
+                                   target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-download me-1"></i>View Document
                                 </a>
                             </p>
@@ -86,18 +94,57 @@
                         <label class="form-label"><strong>Last Updated:</strong></label>
                         <p>{{ weaver.updated_at.strftime('%B %d, %Y') if weaver.updated_at else '—' }}</p>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
 
-     
-<!-- Assigned Looms Table -->
+    <!-- BANK DETAILS CARD -->
+    <div class="col-md-6 mt-4 mt-md-0">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-university me-2"></i>Bank Details</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row">
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label"><strong>Account Number:</strong></label>
+                        <p>{{ weaver.account_number if weaver.account_number else '—' }}</p>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label"><strong>IFSC Code:</strong></label>
+                        <p>{{ weaver.ifsc_code if weaver.ifsc_code else '—' }}</p>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label"><strong>Account Type:</strong></label>
+                        <p>{{ weaver.account_type if weaver.account_type else '—' }}</p>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label"><strong>Name in Bank:</strong></label>
+                        <p>{{ weaver.name_in_bank if weaver.name_in_bank else '—' }}</p>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div> <!-- row ends -->
+
+<!-- ASSIGNED LOOMS TABLE -->
 {% if assigned_looms %}
 <div class="card mt-4">
     <div class="card-header">
         <h5><i class="fas fa-tools me-2"></i>Assigned Looms ({{ assigned_looms|length }})</h5>
     </div>
+
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-striped">
@@ -114,26 +161,37 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for loom in assigned_looms %}
                     <tr>
                         <td>{{ loom.date.strftime('%Y-%m-%d') if loom.date else '' }}</td>
                         <td>{{ loom.nameof_saree }}</td>
-                        <td>{{ loom.colors[:30] if loom.colors else 'N/A' }}{% if loom.colors and loom.colors|length > 30 %}...{% endif %}</td>
+
+                        <td>
+                            {{ loom.colors[:30] if loom.colors else 'N/A' }}
+                            {% if loom.colors and loom.colors|length > 30 %}...{% endif %}
+                        </td>
+
                         <td>{{ loom.completed_sarees }}/{{ loom.number_of_sarees }}</td>
+
                         <td>
                             <div class="progress" style="height: 20px; width: 80px;">
-                                <div class="progress-bar bg-success" role="progressbar" 
-                                     style="width: {{ loom.completion_percentage or 0 }}%">
+                                <div class="progress-bar bg-success"
+                                     role="progressbar"
+                                     style="width: {{ loom.completion_percentage or 0 }}%;">
                                     {{ "%.0f"|format(loom.completion_percentage or 0) }}%
                                 </div>
                             </div>
                         </td>
+
                         <td class="text-success">₹{{ "%.2f"|format(loom.amount_credit or 0) }}</td>
                         <td class="text-danger">₹{{ "%.2f"|format(loom.amount_debit or 0) }}</td>
+
                         <td class="{% if (loom.balance or 0) >= 0 %}text-success{% else %}text-danger{% endif %}">
                             ₹{{ "%.2f"|format(loom.balance or 0) }}
                         </td>
+
                         <td>
                             <a href="{{ url_for('loom.view_loom', id=loom.id) }}" class="btn btn-info btn-sm">
                                 <i class="fas fa-eye"></i> View
@@ -142,11 +200,11 @@
                     </tr>
                     {% endfor %}
                 </tbody>
+
             </table>
         </div>
     </div>
 </div>
-{% else %}
-
 {% endif %}
+
 {% endblock %}

@@ -202,3 +202,11 @@ body {
     0% { opacity: 0; transform: translateY(20px); }
     100% { opacity: 1; transform: translateY(0); }
 }
+
+
+/* Fix table header and cell text visibility */
+.table th,
+.table td {
+    color: #333 !important;      /* Dark gray text */
+    font-weight: 500;
+}

@@ -60,6 +60,9 @@ def create_app(config_name=None):
     from controllers.loom_controller import loom_bp
     from controllers.weaver_controller import weaver_bp
     from controllers.notification_controller import notification_bp
+    from controllers.payments_controller import payments_bp
+
+    app.register_blueprint(payments_bp)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(loom_bp)

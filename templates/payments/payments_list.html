@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Payments{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2 class="text-center text-primary fw-bold mb-4">Payments</h2>
+
+    {% if payment_dates %}
+        <div class="list-group">
+
+            {% for d in payment_dates %}
+                <a href="{{ url_for('payments.payments_by_date', date=d) }}" 
+                   class="list-group-item list-group-item-action">
+                    <strong>{{ d.strftime('%d-%m-%Y') }}</strong>
+                </a>
+            {% endfor %}
+
+        </div>
+    {% else %}
+        <p class="text-center text-muted mt-5">No payments found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

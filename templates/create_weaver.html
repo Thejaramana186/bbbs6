@@ -12,54 +12,91 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <!-- ✅ Display flash messages -->
+
+                    <!-- Flash Messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
                                 <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                                     {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
 
                     <form method="POST" enctype="multipart/form-data">
+
+                        <!-- Weaver Basic Info -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="weavername" class="form-label fw-semibold">Weaver Name *</label>
-                                <input type="text" class="form-control" id="weavername" name="weavername" 
-                                       placeholder="Enter weaver name" required>
+                                <label class="form-label fw-semibold">Weaver Name *</label>
+                                <input type="text" class="form-control" name="weavername" placeholder="Enter weaver name" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="phonenumber" class="form-label fw-semibold">Phone Number *</label>
-                                <input type="tel" class="form-control" id="phonenumber" name="phonenumber" 
-                                       placeholder="Enter phone number" required pattern="[0-9]{10}" 
-                                       title="Enter a valid 10-digit number">
+                                <label class="form-label fw-semibold">Phone Number *</label>
+                                <input type="tel" class="form-control" name="phonenumber" placeholder="Enter phone number"
+                                       required pattern="[0-9]{10}" title="Enter a valid 10-digit number">
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="address" class="form-label fw-semibold">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="2" 
+                            <label class="form-label fw-semibold">Address</label>
+                            <textarea class="form-control" name="address" rows="2"
                                       placeholder="Enter complete address"></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label for="skills" class="form-label fw-semibold">Skills & Specialties</label>
-                            <textarea class="form-control" id="skills" name="skills" rows="2" 
+                            <label class="form-label fw-semibold">Skills & Specialties</label>
+                            <textarea class="form-control" name="skills" rows="2"
                                       placeholder="e.g., Silk weaving, Traditional patterns, Zari work"></textarea>
                         </div>
 
+                        <!-- Bank Details Section -->
+                        <hr>
+                        <h5 class="fw-bold mb-3 text-primary">Bank Details</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Account Number</label>
+                                <input type="text" class="form-control" name="account_number" placeholder="Enter bank account number">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">IFSC Code</label>
+                                <input type="text" class="form-control" name="ifsc_code" placeholder="Enter IFSC code">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Account Type</label>
+                                <select class="form-select" name="account_type">
+                                    <option value="" selected disabled>Select account type</option>
+                                    <option value="Savings">Savings</option>
+                                    <option value="Current">Current</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">bank_holder_name</label>
+                                <input type="text" class="form-control" name="name_in_bank" placeholder="Enter name registered in bank">
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Aadhar Upload -->
                         <div class="mb-3">
-                            <label for="aadharcard" class="form-label fw-semibold">Aadhar Card Upload</label>
-                            <input type="file" class="form-control" id="aadharcard" name="aadharcard"
+                            <label class="form-label fw-semibold">Aadhar Card Upload</label>
+                            <input type="file" class="form-control" name="aadharcard"
                                    accept=".pdf,.jpg,.jpeg,.png">
                             <div class="form-text text-muted">
                                 Supported formats: PDF, JPG, JPEG, PNG (Max 16MB)
                             </div>
                         </div>
 
+                        <!-- Buttons -->
                         <div class="d-flex justify-content-end mt-4">
                             <a href="{{ url_for('weaver.weaver') }}" class="btn btn-secondary me-2">
                                 <i class="fas fa-times me-1"></i>Cancel
@@ -68,7 +105,9 @@
                                 <i class="fas fa-save me-1"></i>Create Weaver
                             </button>
                         </div>
+
                     </form>
+
                 </div>
             </div>
         </div>

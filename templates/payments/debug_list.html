@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container mt-4">
+    <h3>Payments debug</h3>
+    <pre>
+    {% for p in payments %}
+{{ p.id }} | {{ p.date }} | {{ p.description }} | {{ p.amount }} | loom_id={{ p.loom_id }} | loom_type={{ p.loom.loom_type if p.loom else 'NONE' }}
+    {% endfor %}
+    </pre>
+  </div>
+{% endblock %}
