@@ -13,12 +13,21 @@
     <div class="col-md-4 mb-3">
         <div class="card shadow-sm h-100 text-center p-3">
             <h5 class="card-title">Loom No: {{ loom.loom_no }}</h5>
-            <p><strong>Weaver:</strong> {{ loom.weaver_name or "No Weaver" }}</p>
+            <p><strong>Weaver:</strong> {{ loom.weaver.weavername if loom.weaver else "No Weaver" }}
+</p>
 
             <div class="d-flex justify-content-center gap-2 mt-3">
-                <a href="{{ url_for('loom.view_loom', loom_id=loom.id) }}" class="btn btn-info btn-sm"><i class="fas fa-eye"></i> View</a>
-                <a href="{{ url_for('loom.add_saree', loom_id=loom.id) }}" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Add Saree</a>
-                <a href="{{ url_for('loom.materials', loom_id=loom.id) }}" class="btn btn-warning btn-sm"><i class="fas fa-boxes"></i> Materials</a>
+                <a href="{{ url_for('loom.view_loom', loom_id=loom.id) }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-eye"></i> View
+                </a>
+
+                <a href="{{ url_for('loom.add_saree', loom_id=loom.id) }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus"></i> Add Saree
+                </a>
+
+                <a href="{{ url_for('loom.materials', loom_id=loom.id) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-boxes"></i> Materials
+                </a>
             </div>
         </div>
     </div>

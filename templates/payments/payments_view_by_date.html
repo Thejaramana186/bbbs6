@@ -6,60 +6,65 @@
 
 <div class="container mt-4">
 
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{{ url_for('payments.list_payments') }}" class="btn btn-secondary">
-            ⬅ Back to Dates
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ url_for('payments.list_payment_dates') }}" class="btn btn-secondary">
+            ⬅ Back
         </a>
 
-        <h3 class="fw-bold text-primary">
-            Date: {{ date.strftime('%d-%m-%Y') }}
+        <h3 class="fw-bold text-primary m-0">
+            Payments on {{ date.strftime('%d-%m-%Y') }}
         </h3>
     </div>
 
-    <!-- ===================== ALL PAYMENTS ===================== -->
+    <!-- ===================== ALL PAYMENTS TABLE ===================== -->
     <h4 class="fw-bold text-success mb-3">All Payments</h4>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr class="text-center">
+    <div class="table-responsive shadow-sm rounded-3">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark text-center">
+                <tr>
                     <th>S. No</th>
-                    <th>Name in Bank</th>
-
-                    <th>Account Name</th>
+                    <th>Weaver Name</th>
+                    
+                    <th>Bank Holder Name</th>
+                    <th>Account Number</th>
                     <th>IFSC Code</th>
-                    <th>Account No</th>
-                    <th>Amount</th>
                     <th>Account Type</th>
+                    <th class="text-end">Amount</th>
                 </tr>
             </thead>
 
             <tbody>
                 {% if all_payments|length == 0 %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-3">
+                    <td colspan="8" class="text-center text-muted py-3">
                         No payments found for this date.
                     </td>
                 </tr>
                 {% else %}
+
                 {% for p in all_payments %}
                 <tr>
                     <td class="text-center">{{ loop.index }}</td>
 
-                    <!-- Show '-' instead of None -->
-                     <td>{{ p.name_in_bank }}</td>
+                    <!-- Weaver Name -->
+                    <td>{{ p.weaver.weavername if p.weaver else "-" }}</td>
 
-                    <td>{{ p.account_name or '-' }}</td>
-                    <td>{{ p.ifsc_code or '-' }}</td>
-                    <td>{{ p.account_no or '-' }}</td>
+                    
+                    <!-- Bank Details -->
+                    <td>{{ p.name_in_bank or "-" }}</td>
+                    <td>{{ p.account_number or "-" }}</td>
+                    <td>{{ p.ifsc_code or "-" }}</td>
+                    <td class="text-center">{{ p.account_type or "-" }}</td>
 
                     <!-- Amount -->
-                    <td class="text-end fw-bold text-danger">{{ "%.2f"|format(p.amount) }}</td>
-
-                    <td class="text-center">{{ p.account_type or '-' }}</td>
+                    <td class="text-end fw-bold text-success">
+                        {{ "%.2f"|format(p.amount) }}
+                    </td>
                 </tr>
                 {% endfor %}
+
                 {% endif %}
             </tbody>
         </table>

@@ -4,22 +4,22 @@ from flask import (
 )
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from models.loom import Warp
-from models.loom import Weft
-
-from models.loom import Loom, Warp, Weft, WarpColor
-
-
-
 
 import os
 import io
+import traceback
 from datetime import datetime
 from sqlalchemy import func
 
-from models.loom import Loom, SareeEntry
-from models.weaver import Weaver
 from app import db
+
+# MODELS
+from models.loom import WeftColor
+
+
+from models.loom import Loom, Warp, Weft, WarpColor, SareeEntry
+from models.weaver import Weaver
+from models.payments import Payment   # <-- Correct Payment import
 
 loom_bp = Blueprint("loom", __name__, url_prefix="/loom")
 
@@ -1480,6 +1480,41 @@ ALL_COLORS = {
 
 
 
+# ---------------------------
+# Helpers
+# ---------------------------
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_file(file):
+    """
+    Save uploaded file to UPLOAD_FOLDER configured in Flask app.
+    Returns the filename (not full path) or None if no file saved.
+    """
+    if not file or not getattr(file, "filename", None):
+        return None
+
+    if not allowed_file(file.filename):
+        return None
+
+    filename = secure_filename(file.filename)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
+    filename = timestamp + filename
+
+    upload_folder = current_app.config.get("UPLOAD_FOLDER", "static/uploads")
+    os.makedirs(upload_folder, exist_ok=True)
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+    return filename
+
+
+# ---------------------------
+# Add warp colors
+# ---------------------------
 @loom_bp.route("/loom/<int:loom_id>/add_colors", methods=["GET", "POST"])
 @login_required
 def add_colors(loom_id):
@@ -1500,23 +1535,30 @@ def add_colors(loom_id):
         flash("Warp color details added successfully!", "success")
         return redirect(url_for("loom.materials", loom_id=loom.id))
 
-    # 🩵 FIX HERE: add all_colors variable
     return render_template("add_colors.html", loom=loom, all_colors=ALL_COLORS)
 
 
-@loom_bp.route('/loom/<int:loom_id>/add_weft', methods=['GET', 'POST'])
+# ---------------------------
+# Add weft
+# ---------------------------
+@loom_bp.route("/loom/<int:loom_id>/add_weft", methods=["GET", "POST"])
 @login_required
 def add_weft(loom_id):
     loom = Loom.query.get_or_404(loom_id)
 
-    if request.method == 'POST':
-        date = request.form.get('date')
-        zari = request.form.get('zari')
-        silk = request.form.get('silk')
+    if request.method == "POST":
+        date_str = request.form.get("date")
+        try:
+            date_val = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else date.today()
+        except Exception:
+            date_val = date.today()
+
+        zari = request.form.get("zari")
+        silk = request.form.get("silk")
 
         new_weft = Weft(
             loom_id=loom.id,
-            date=datetime.strptime(date, "%Y-%m-%d"),
+            date=date_val,
             zari=zari,
             silk=silk
         )
@@ -1524,23 +1566,42 @@ def add_weft(loom_id):
         db.session.add(new_weft)
         db.session.commit()
 
-        flash('Weft details added successfully!', 'success')
-        return redirect(url_for('loom.materials', loom_id=loom.id))
+        flash("Weft details added successfully!", "success")
+        return redirect(url_for("loom.materials", loom_id=loom.id))
 
     return render_template("add_weft.html", loom=loom)
 
 
+@loom_bp.route('/edit_weft/<int:weft_id>', methods=['GET', 'POST'])
+def edit_weft(weft_id):
+    weft = Weft.query.get_or_404(weft_id)
+
+    if request.method == 'POST':
+        weft.date = request.form.get('date')
+        weft.zari = request.form.get('zari')
+        weft.silk = request.form.get('silk')
+
+        db.session.commit()
+        flash("Weft updated successfully!", "success")
+        return redirect(url_for('loom.materials', loom_id=weft.loom_id))
+
+    return render_template('edit_weft.html', weft=weft)
+
+
+# ---------------------------
+# View warp entries (if you use entry_type)
+# ---------------------------
 @loom_bp.route("/<int:loom_id>/view")
 @login_required
 def view_warp(loom_id):
-    from app import db
-    from models.loom import Loom, SareeEntry
-
-    # Fetch the loom details
+    # This route was in your code — keep it, but be careful that SareeEntry may not have entry_type
     loom = Loom.query.get_or_404(loom_id)
-
-    # Fetch all warp entries related to this loom
-    warp_entries = SareeEntry.query.filter_by(loom_id=loom_id, entry_type='warp').all()
+    warp_entries = []
+    try:
+        warp_entries = SareeEntry.query.filter_by(loom_id=loom_id, entry_type='warp').all()
+    except Exception:
+        # if entry_type doesn't exist on SareeEntry, return empty list
+        warp_entries = []
 
     return render_template(
         "view_warp.html",
@@ -1550,15 +1611,39 @@ def view_warp(loom_id):
     )
 
 
+@loom_bp.route("/edit_warp/<int:loom_id>", methods=["GET", "POST"])
+def edit_warp(loom_id):
+    loom = Loom.query.get_or_404(loom_id)
+    warp = Warp.query.filter_by(loom_id=loom_id).first()
+
+    if request.method == "POST":
+        warp.zari_border_right = request.form["zari_border_right"]
+        warp.zari_border_left = request.form["zari_border_left"]
+        warp.zari_body = request.form["zari_body"]
+        warp.silk_border_right = request.form["silk_border_right"]
+        warp.silk_border_left = request.form["silk_border_left"]
+        warp.silk_body = request.form["silk_body"]
+
+        db.session.commit()
+        return redirect(url_for("loom.materials", loom_id=loom_id))
+
+    return render_template("edit_warp.html", loom=loom, warp=warp)
 
 
+# ---------------------------
+# Materials page
+# ---------------------------
 @loom_bp.route("/loom/<int:loom_id>/materials")
 @login_required
 def materials(loom_id):
     loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
-    warps = Warp.query.filter_by(loom_id=loom_id).all()
+
+    warps = Warp.query.filter_by(loom_id=loom.id).all()
     wefts = Weft.query.filter_by(loom_id=loom.id).all()
     colors = WarpColor.query.filter_by(loom_id=loom.id).all()
+    
+    # 🔥 FIX: Add WeftColor query
+    weft_colors = WeftColor.query.filter_by(loom_id=loom.id).all()
 
     return render_template(
         "materials.html",
@@ -1566,62 +1651,38 @@ def materials(loom_id):
         warps=warps,
         wefts=wefts,
         colors=colors,
-        all_colors=ALL_COLORS,  # ✅ pass directly
+        weft_colors=weft_colors,   # 🔥 Pass to HTML
+        all_colors=ALL_COLORS,
     )
 
 
 
+# ---------------------------
+# Add warp
+# ---------------------------
 @loom_bp.route("/loom/<int:loom_id>/add_warp", methods=["GET", "POST"])
 @login_required
 def add_warp(loom_id):
     if request.method == "POST":
-        zari_border_left = request.form.get("zari_border_left")
-        zari_border_right = request.form.get("zari_border_right")
-        zari_body = request.form.get("zari_body")
-        silk_border_left = request.form.get("silk_border_left")
-        silk_border_right = request.form.get("silk_border_right")
-        silk_body = request.form.get("silk_body")
-
-        # Save to database (example)
         new_warp = Warp(
             loom_id=loom_id,
-            zari_border_left=zari_border_left,
-            zari_border_right=zari_border_right,
-            zari_body=zari_body,
-            silk_border_left=silk_border_left,
-            silk_border_right=silk_border_right,
-            silk_body=silk_body,
+            zari_border_left=request.form.get("zari_border_left"),
+            zari_border_right=request.form.get("zari_border_right"),
+            zari_body=request.form.get("zari_body"),
+            silk_border_left=request.form.get("silk_border_left"),
+            silk_border_right=request.form.get("silk_border_right"),
+            silk_body=request.form.get("silk_body"),
         )
         db.session.add(new_warp)
         db.session.commit()
-
-        # ✅ Redirect to materials.html (your route for materials)
-        return redirect(url_for('loom.materials', loom_id=loom_id))
+        return redirect(url_for("loom.materials", loom_id=loom_id))
 
     return render_template("add_warp.html", loom_id=loom_id)
 
-# -------------------------------
-# Helpers
-# -------------------------------
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_file(file):
-    if file and file.filename and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_")
-        filename = timestamp + filename
-        upload_folder = current_app.config.get("UPLOAD_FOLDER", "static/uploads")
-        os.makedirs(upload_folder, exist_ok=True)
-        file_path = os.path.join(upload_folder, filename)
-        file.save(file_path)
-        return filename
-    return None
-
-# -------------------------------
-# Loom Routes
-# -------------------------------
+# ---------------------------
+# Loom list
+# ---------------------------
 @loom_bp.route("/looms")
 @login_required
 def looms():
@@ -1632,6 +1693,10 @@ def looms():
     )
     return render_template("looms.html", looms=looms)
 
+
+# ---------------------------
+# Create loom (optional preselect weaver)
+# ---------------------------
 @loom_bp.route("/create_loom", methods=["GET", "POST"])
 @loom_bp.route("/create_loom/<int:weaver_id>", methods=["GET", "POST"])
 @login_required
@@ -1649,7 +1714,9 @@ def create_loom(weaver_id=None):
             loom_type = request.form.get("loom_type")
             saree_type = request.form.get("saree_type")
             saree_name = request.form.get("saree_name")
-            weaver_name = request.form.get("weaver_name")
+            
+            weaver_id = request.form.get("weaver_id")
+
             num_sarees = int(request.form.get("num_sarees") or 0)
 
             last_loom = (
@@ -1666,7 +1733,8 @@ def create_loom(weaver_id=None):
                 num_sarees=num_sarees,
                 saree_type=saree_type,
                 saree_name=saree_name,
-                weaver_name=weaver_name if weaver_name else "No Weaver",
+                
+                weaver_id=int(weaver_id) if weaver_id else None,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
@@ -1678,10 +1746,15 @@ def create_loom(weaver_id=None):
 
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             flash(f"Failed to create loom: {e}", "danger")
 
     return render_template("create_loom.html", weaver=weaver, weavers=weavers)
 
+
+# ---------------------------
+# View loom & sarees
+# ---------------------------
 @loom_bp.route("/<int:loom_id>")
 @login_required
 def view_loom(loom_id):
@@ -1692,22 +1765,17 @@ def view_loom(loom_id):
         .all()
     )
 
-    # Attach readable color info correctly (fixed indentation)
+    # Attach readable color info
     for s in sarees:
-        # Border color
-        if s.border_color in ALL_COLORS:
-            s.border_hex = ALL_COLORS[s.border_color]
-        else:
-            s.border_hex = "#ffffff"  # fallback
-
-        # Body color
-        if s.body_color in ALL_COLORS:
-            s.body_hex = ALL_COLORS[s.body_color]
-        else:
-            s.body_hex = "#ffffff"
+        s.border_hex = ALL_COLORS.get(s.border_color, "#ffffff")
+        s.body_hex = ALL_COLORS.get(s.body_color, "#ffffff")
 
     return render_template("view_loom.html", loom=loom, sarees=sarees, all_colors=ALL_COLORS)
 
+
+# ---------------------------
+# Edit loom
+# ---------------------------
 @loom_bp.route("/edit_loom/<int:loom_id>", methods=["GET", "POST"])
 @login_required
 def edit_loom(loom_id):
@@ -1722,7 +1790,7 @@ def edit_loom(loom_id):
             loom.num_sarees = int(request.form.get("num_sarees") or loom.num_sarees)
 
             weaver_id = request.form.get("weaver_id")
-            loom.weaver_id = weaver_id if weaver_id else None
+            loom.weaver_id = int(weaver_id) if weaver_id else None
 
             file = request.files.get("saree_image")
             filename = save_file(file)
@@ -1736,10 +1804,15 @@ def edit_loom(loom_id):
 
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             flash(f"Failed to update loom: {e}", "danger")
 
     return render_template("edit_loom.html", loom=loom, weavers=weavers)
 
+
+# ---------------------------
+# Delete loom
+# ---------------------------
 @loom_bp.route("/delete_loom/<int:loom_id>", methods=["POST"])
 @login_required
 def delete_loom(loom_id):
@@ -1750,13 +1823,15 @@ def delete_loom(loom_id):
         flash("Loom deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         flash(f"Failed to delete loom: {e}", "danger")
 
     return redirect(url_for("loom.looms"))
 
-# -------------------------------
-# Saree Entry Routes
-# -------------------------------
+
+# ---------------------------
+# Add saree + AUTO PAYMENT ENTRY
+# ---------------------------
 @loom_bp.route("/<int:loom_id>/add_saree", methods=["GET", "POST"])
 @login_required
 def add_saree(loom_id):
@@ -1764,25 +1839,25 @@ def add_saree(loom_id):
 
     if request.method == "POST":
         try:
-            # ---------------------- Parse Dates ---------------------- #
+            # Dates
             date_str = request.form.get("date")
             saree_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else date.today()
 
             completion_date_str = request.form.get("completion_date")
             completion_date = datetime.strptime(completion_date_str, "%Y-%m-%d").date() if completion_date_str else None
 
-            # ---------------------- Limit Check ---------------------- #
+            # Limit check
             existing_count = SareeEntry.query.filter_by(loom_id=loom.id).count()
             if loom.num_sarees and existing_count >= loom.num_sarees:
                 flash("You cannot add more sarees. Limit reached.", "danger")
                 return redirect(url_for("loom.view_loom", loom_id=loom.id))
 
-            # ---------------------- Auto Saree Number ---------------------- #
+            # Auto saree number
             last_saree_number = db.session.query(func.max(SareeEntry.saree_number)) \
                                         .filter_by(loom_id=loom.id).scalar()
             saree_number = (last_saree_number or 0) + 1
 
-            # ---------------------- Create Saree Entry ---------------------- #
+            # Create saree
             saree = SareeEntry(
                 loom_id=loom.id,
                 saree_number=saree_number,
@@ -1809,7 +1884,7 @@ def add_saree(loom_id):
                 completion_date=completion_date
             )
 
-            # ---------------------- File Upload ---------------------- #
+            # File upload
             file = request.files.get("saree_image")
             filename = save_file(file)
             if filename:
@@ -1818,19 +1893,26 @@ def add_saree(loom_id):
             db.session.add(saree)
             db.session.commit()
 
-            # ---------------------- AUTO PAYMENT ENTRY ---------------------- #
-            if saree.amount_debit > 0:
+            # AUTO PAYMENT: create Payment row linked to loom, saree and weaver + snapshot bank details
+            if float(saree.amount_debit or 0) > 0:
                 try:
+                    weaver = None
+                    if loom.weaver_id:
+                        weaver = Weaver.query.get(loom.weaver_id)
+
                     payment = Payment(
                         date=saree_date,
-                        description=f"Saree {saree.saree_number} added to {loom.loom_type} (Loom {loom.loom_no})",
-                        amount=saree.amount_debit,
+                        amount=float(saree.amount_debit or 0),
                         payment_type="debit",
                         loom_id=loom.id,
                         saree_id=saree.id,
+                        weaver_id=weaver.id if weaver else None,
 
-                        # keeping for backend consistency (though UI no longer groups by loom_type)
-                        loom_type=loom.loom_type.lower() if loom.loom_type else None
+                        # snapshot bank details from weaver (if exists)
+                        name_in_bank=weaver.name_in_bank if weaver else None,
+                        account_number=weaver.account_number if weaver else None,
+                        ifsc_code=weaver.ifsc_code if weaver else None,
+                        account_type=weaver.account_type if weaver else None,
                     )
 
                     db.session.add(payment)
@@ -1838,6 +1920,7 @@ def add_saree(loom_id):
 
                 except Exception as e:
                     db.session.rollback()
+                    traceback.print_exc()
                     print("Auto Payment Insert Failed:", e)
 
             flash("✅ New saree added successfully!", "success")
@@ -1845,6 +1928,7 @@ def add_saree(loom_id):
 
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             flash(f"⚠️ Failed to add saree: {e}", "danger")
 
     return render_template(
@@ -1854,6 +1938,10 @@ def add_saree(loom_id):
         all_colors=ALL_COLORS
     )
 
+
+# ---------------------------
+# Edit saree (does not update payment records automatically)
+# ---------------------------
 @loom_bp.route("/<int:loom_id>/edit_saree/<int:saree_id>", methods=["GET", "POST"])
 @login_required
 def edit_saree(loom_id, saree_id):
@@ -1890,14 +1978,15 @@ def edit_saree(loom_id, saree_id):
 
         except Exception as e:
             db.session.rollback()
+            traceback.print_exc()
             flash(f"Failed to update saree: {e}", "danger")
 
     return render_template("edit_saree.html", saree=saree, loom=loom, loom_id=loom_id, all_colors=ALL_COLORS)
 
 
-# -------------------------------
-# Weaver Assignment Routes
-# -------------------------------
+# ---------------------------
+# Assign / Unassign weaver
+# ---------------------------
 @loom_bp.route("/assign_weaver/<int:loom_id>/<int:weaver_id>", methods=["POST"])
 @login_required
 def assign_weaver(loom_id, weaver_id):
@@ -1910,9 +1999,11 @@ def assign_weaver(loom_id, weaver_id):
         flash(f'Loom "{loom.saree_name}" assigned to weaver "{weaver.weavername}".', "success")
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         flash(f"Failed to assign weaver: {e}", "danger")
 
     return redirect(url_for("loom.view_loom", loom_id=loom_id))
+
 
 @loom_bp.route("/unassign_weaver/<int:loom_id>", methods=["POST"])
 @login_required
@@ -1921,38 +2012,37 @@ def unassign_weaver(loom_id):
     try:
         loom.weaver_id = None
         db.session.commit()
-        flash(f'Weaver unassigned from loom "{loom.saree_name}".', "success")
+        flash(f"Weaver unassigned from loom '{loom.saree_name}'.", "success")
+
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         flash(f"Failed to unassign weaver: {e}", "danger")
 
     return redirect(url_for("loom.view_loom", loom_id=loom_id))
 
-# -------------------------------
-# Download Route (CSV Export)
-# -------------------------------
-@loom_bp.route('/<int:loom_id>/download')
+
+# ---------------------------
+# Download CSV
+# ---------------------------
+@loom_bp.route("/<int:loom_id>/download")
 @login_required
 def download(loom_id):
     loom = Loom.query.get_or_404(loom_id)
-    sarees = (
-        SareeEntry.query.filter_by(loom_id=loom.id)
-        .order_by(SareeEntry.saree_number)
-        .all()
-    )
+    sarees = SareeEntry.query.filter_by(loom_id=loom.id).order_by(SareeEntry.saree_number).all()
 
     output = io.StringIO()
-    output.write("Saree No,Date,Completion Date,Name,Color,Warp/Weft,Material,Credit,Debit,Balance\n")
+    output.write("Saree No,Date,Completion Date,Name,Border,Body,Warp/Weft,Material,Credit,Debit,Balance\n")
     for s in sarees:
         color_value = ALL_COLORS.get(s.colors, s.colors or "")
         output.write(
             f"{s.saree_number},{s.date or ''},{s.completion_date or ''},{s.saree_name or ''},"
-            f"{s.colors or ''} ({color_value}),{s.warp_weft or ''},{s.material or ''},"
+            f"{s.border_color or ''},{s.body_color or ''},{s.warp_weft or ''},{s.material or ''},"
             f"{s.amount_credit or 0},{s.amount_debit or 0},{s.balance or 0}\n"
         )
 
     mem = io.BytesIO()
-    mem.write(output.getvalue().encode('utf-8'))
+    mem.write(output.getvalue().encode("utf-8"))
     mem.seek(0)
 
     return send_file(
@@ -1963,38 +2053,89 @@ def download(loom_id):
     )
 
 
-
-# -------------------------------------------
-# EXTRA LOOM CATEGORY ROUTES
-# -------------------------------------------
-
+# ---------------------------
+# Category filters
+# ---------------------------
 @loom_bp.route("/handlooms")
 @login_required
 def handlooms():
-    looms = Loom.query.filter_by(
-        user_id=current_user.id,
-        loom_type="Handloom"
-    ).order_by(Loom.created_at.desc()).all()
+    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Handloom").order_by(Loom.created_at.desc()).all()
     return render_template("handlooms.html", looms=looms)
 
 
 @loom_bp.route("/powerlooms")
 @login_required
 def powerlooms():
-    looms = Loom.query.filter_by(
-        user_id=current_user.id,
-        loom_type="Powerloom"
-    ).order_by(Loom.created_at.desc()).all()
+    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Powerloom").order_by(Loom.created_at.desc()).all()
     return render_template("powerlooms.html", looms=looms)
 
 
 @loom_bp.route("/outsidelooms")
 @login_required
 def outsidelooms():
-    looms = Loom.query.filter_by(
-        user_id=current_user.id,
-        loom_type="Outsideloom"
-    ).order_by(Loom.created_at.desc()).all()
+    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Outsideloom").order_by(Loom.created_at.desc()).all()
     return render_template("outsidelooms.html", looms=looms)
 
 
+@loom_bp.route("/loom/<int:loom_id>/add_weft_color", methods=["GET", "POST"])
+@login_required
+def add_weft_color(loom_id):
+    loom = Loom.query.get_or_404(loom_id)
+
+    if request.method == "POST":
+        wc = WeftColor(
+            loom_id=loom_id,
+            no_of_sarees=request.form.get("no_of_sarees"),
+            border_weft=request.form.get("border_weft"),
+            body_weft=request.form.get("body_weft"),
+            meena_a=request.form.get("meena_a"),
+            meena_b=request.form.get("meena_b"),
+            meena_c=request.form.get("meena_c"),
+            meena_d=request.form.get("meena_d"),
+        )
+
+        db.session.add(wc)
+        db.session.commit()
+
+        flash("Weft Color added successfully!", "success")
+        return redirect(url_for("loom.materials", loom_id=loom_id))
+
+    # 🔥 FIX: send all_colors to template
+    return render_template(
+        "add_weft_color.html",
+        loom=loom,
+        all_colors=ALL_COLORS
+    )
+
+
+
+@loom_bp.route("/loom/edit_weft_color/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_weft_color(id):
+    wc = WeftColor.query.get_or_404(id)
+
+    # Correct loom load
+    loom = Loom.query.get(wc.loom_id)
+
+    # Use global ALL_COLORS dictionary
+    all_colors = ALL_COLORS
+
+    if request.method == "POST":
+        wc.no_of_sarees = request.form["no_of_sarees"]
+        wc.border_weft = request.form["border_weft"]
+        wc.body_weft = request.form["body_weft"]
+        wc.meena_a = request.form["meena_a"]
+        wc.meena_b = request.form["meena_b"]
+        wc.meena_c = request.form["meena_c"]
+        wc.meena_d = request.form["meena_d"]
+
+        db.session.commit()
+        flash("Weft colors updated!", "success")
+        return redirect(url_for("loom.materials", loom_id=loom.id))
+
+    return render_template(
+        "edit_weft_color.html",
+        wc=wc,
+        loom=loom,
+        all_colors=all_colors
+    )

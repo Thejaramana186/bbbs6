@@ -1,67 +1,137 @@
 {% extends "base.html" %}
-
 {% block title %}Edit Weaver - Loom Management System{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="fas fa-edit me-2"></i>Edit Weaver</h4>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>Edit Weaver
+                </h4>
             </div>
+
             <div class="card-body">
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
                 <form method="POST" enctype="multipart/form-data">
+
+                    <!-- Weaver Basic Info -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="weavername" class="form-label">Weaver Name *</label>
-                            <input type="text" class="form-control" id="weavername" name="weavername" value="{{ weaver.weavername }}" required>
+                            <label class="form-label fw-semibold">Weaver Name *</label>
+                            <input type="text" class="form-control" name="weavername"
+                                   value="{{ weaver.weavername }}" required>
                         </div>
+
                         <div class="col-md-6 mb-3">
-                            <label for="phonenumber" class="form-label">Phone Number *</label>
-                            <input type="tel" class="form-control" id="phonenumber" name="phonenumber" value="{{ weaver.phonenumber }}" required>
+                            <label class="form-label fw-semibold">Phone Number *</label>
+                            <input type="tel" class="form-control" name="phonenumber"
+                                   value="{{ weaver.phonenumber }}" required pattern="[0-9]{10}"
+                                   title="Enter a valid 10-digit number">
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea class="form-control" id="address" name="address" rows="2">{{ weaver.address or '' }}</textarea>
+                        <label class="form-label fw-semibold">Address</label>
+                        <textarea class="form-control" name="address" rows="2"
+                                  placeholder="Enter complete address">{{ weaver.address or '' }}</textarea>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="skills" class="form-label">Skills & Specialties</label>
-                        <textarea class="form-control" id="skills" name="skills" rows="2">{{ weaver.skills or '' }}</textarea>
+                        <label class="form-label fw-semibold">Skills & Specialties</label>
+                        <textarea class="form-control" name="skills" rows="2"
+                                  placeholder="e.g., Silk weaving, Traditional patterns, Zari work">{{ weaver.skills or '' }}</textarea>
                     </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if weaver.is_active %}checked{% endif %}>
-                            <label class="form-check-label" for="is_active">
-                                Active Status
-                            </label>
-                            <div class="form-text">Uncheck to deactivate this weaver</div>
+
+                    <!-- Bank Details Section -->
+                    <hr>
+                    <h5 class="fw-bold mb-3 text-primary">Bank Details</h5>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Account Number</label>
+                            <input type="text" class="form-control" name="account_number"
+                                   value="{{ weaver.account_number or '' }}" placeholder="Enter bank account number">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">IFSC Code</label>
+                            <input type="text" class="form-control" name="ifsc_code"
+                                   value="{{ weaver.ifsc_code or '' }}" placeholder="Enter IFSC code">
                         </div>
                     </div>
-                    
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Account Type</label>
+                            <select class="form-select" name="account_type">
+                                <option value="" {% if not weaver.account_type %}selected{% endif %} disabled>Select account type</option>
+                                <option value="Savings" {% if weaver.account_type == 'Savings' %}selected{% endif %}>Savings</option>
+                                <option value="Current" {% if weaver.account_type == 'Current' %}selected{% endif %}>Current</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Name in Bank</label>
+                            <input type="text" class="form-control" name="name_in_bank"
+                                   value="{{ weaver.name_in_bank or '' }}" placeholder="Enter name registered in bank">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Aadhar Upload -->
                     <div class="mb-3">
-                        <label for="aadharcard" class="form-label">Aadhar Card Upload</label>
+                        <label class="form-label fw-semibold">Aadhar Card Upload</label>
+
                         {% if weaver.aadharcard %}
-                        <div class="mb-2">
-                            <small class="text-muted">Current file: 
-                                <a href="{{ url_for('static', filename='uploads/' + weaver.aadharcard) }}" target="_blank">{{ weaver.aadharcard }}</a>
-                            </small>
-                        </div>
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    Current file:
+                                    <a href="{{ url_for('static', filename='uploads/' + weaver.aadharcard) }}" target="_blank">
+                                        {{ weaver.aadharcard }}
+                                    </a>
+                                </small>
+                            </div>
                         {% endif %}
-                        <input type="file" class="form-control" id="aadharcard" name="aadharcard" accept=".pdf,.jpg,.jpeg,.png">
-                        <div class="form-text">Leave empty to keep current file. Supported formats: PDF, JPG, JPEG, PNG (Max 16MB)</div>
+
+                        <input type="file" class="form-control" name="aadharcard" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text text-muted">
+                            Supported formats: PDF, JPG, JPEG, PNG (Max 16MB). Leave empty to keep current file.
+                        </div>
                     </div>
-                    
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-success me-2">
+
+                    <!-- Active Status -->
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                               {% if weaver.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Active Weaver</label>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-end mt-4 gap-2">
+
+                        <button type="submit" class="btn btn-success">
                             <i class="fas fa-save me-1"></i>Update Weaver
                         </button>
-                        <a href="{{ url_for('weaver.view_weaver', id=weaver.id) }}" class="btn btn-secondary me-2">
+
+                        <a href="{{ url_for('weaver.view_weaver', id=weaver.id) }}" class="btn btn-secondary">
                             <i class="fas fa-times me-1"></i>Cancel
                         </a>
+
                         {% if weaver.active_looms_count == 0 %}
                         <form method="POST" action="{{ url_for('weaver.delete_weaver', id=weaver.id) }}" class="d-inline">
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this weaver? This action cannot be undone.')">
@@ -69,10 +139,14 @@
                             </button>
                         </form>
                         {% endif %}
+
                     </div>
+
                 </form>
+
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}

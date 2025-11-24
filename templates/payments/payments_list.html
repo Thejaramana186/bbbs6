@@ -4,23 +4,53 @@
 
 {% block content %}
 
+<style>
+    /* Change Payments heading color */
+    .payments-title {
+        color: #FF6600;   /* 🔶 Change heading color here */
+        font-weight: 700;
+    }
+
+    /* Custom View button color */
+    .btn-view {
+        background-color: #28A745;   /* 🟢 Custom button color */
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 6px 18px;
+        border: none;
+    }
+
+    .btn-view:hover {
+        background-color: #1e7e34; /* Darker green on hover */
+        color: #fff;
+    }
+</style>
+
+
 <div class="container mt-4">
-    <h2 class="text-center text-primary fw-bold mb-4">Payments</h2>
 
-    {% if payment_dates %}
-        <div class="list-group">
+    <h2 class="payments-title mb-4">Payments</h2>
 
-            {% for d in payment_dates %}
-                <a href="{{ url_for('payments.payments_by_date', date=d) }}" 
-                   class="list-group-item list-group-item-action">
-                    <strong>{{ d.strftime('%d-%m-%Y') }}</strong>
+    <div class="row">
+        {% for d in payment_dates %}
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm p-3 text-center">
+
+                <h5 class="fw-bold">
+                    Date: {{ d.strftime('%d-%m-%Y') }}
+                </h5>
+
+                <a href="{{ url_for('payments.payments_by_date', date_str=d) }}"
+                   class="btn-view mt-2">
+                    View
                 </a>
-            {% endfor %}
 
+            </div>
         </div>
-    {% else %}
-        <p class="text-center text-muted mt-5">No payments found.</p>
-    {% endif %}
+        {% endfor %}
+    </div>
+
 </div>
 
 {% endblock %}

@@ -16,7 +16,8 @@
     <div class="col-md-4 mb-3">
         <div class="card shadow-sm h-100 text-center p-3">
             <h5 class="card-title">Loom No: {{ loom.loom_no }}</h5>
-            <p><strong>Weaver:</strong> {{ loom.weaver_name or "No Weaver" }}</p>
+            <p><strong>Weaver:</strong> {{ loom.weaver.weavername if loom.weaver else "No Weaver" }}
+</p>
 
             <div class="d-flex justify-content-center gap-2 mt-3">
                 <!-- View Loom Button -->

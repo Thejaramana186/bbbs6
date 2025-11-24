@@ -6,34 +6,44 @@ class Payment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # Payment date
-    date = db.Column(db.Date, nullable=False, default=date.today)
-
-    # Payment details
-    description = db.Column(db.String(255), nullable=False)
+    # Basic fields
+    date = db.Column(db.Date, default=date.today, nullable=False)
     amount = db.Column(db.Float, nullable=False)
+    payment_type = db.Column(db.String(10), nullable=False)  # credit / debit
 
-    # debit / credit
-    payment_type = db.Column(db.String(10), nullable=False)
+    # Foreign Keys
+    loom_id = db.Column(db.Integer, db.ForeignKey('looms.id'), nullable=True)
+    saree_id = db.Column(db.Integer, db.ForeignKey('saree_entries.id'), nullable=True)
+    weaver_id = db.Column(db.Integer, db.ForeignKey('weavers.id'), nullable=True)
 
-    # Loom and Saree references (optional)
-    loom_id = db.Column(db.Integer, nullable=True)
-    saree_id = db.Column(db.Integer, nullable=True)
+    # Bank Details (Snapshot)
+    name_in_bank = db.Column(db.String(100))
+    account_number = db.Column(db.String(50))
+    ifsc_code = db.Column(db.String(50))
+    account_type = db.Column(db.String(50))
 
-    # handloom / powerloom / outside
-    loom_type = db.Column(db.String(50), nullable=True)
+    # -------------------- Relationships -------------------- #
 
-    # ---------- OPTIONAL BANK FIELDS ----------
-    # If you want account details shown in the new table layout,
-    # add these fields in your DB as well.
+    # Payment ↔ Loom
+    loom_ref = db.relationship(
+        "Loom",
+        back_populates="payments",
+        overlaps="loom,payment_list,payments"
+    )
 
-    account_name = db.Column(db.String(255), nullable=True)
-    ifsc_code = db.Column(db.String(50), nullable=True)
-    account_no = db.Column(db.String(50), nullable=True)
-    account_type = db.Column(db.String(50), nullable=True)
-    name_in_bank = db.Column(db.String(120))
+    # Payment ↔ Saree
+    saree_entry = db.relationship(
+        "SareeEntry",
+        back_populates="payments",
+        overlaps="saree,saree_ref,payments"
+    )
 
-    # ------------------------------------------
+    # Payment ↔ Weaver
+    weaver = db.relationship(
+        "Weaver",
+        back_populates="payments",
+        overlaps="weaver_ref,payment_list"
+    )
 
     def __repr__(self):
-        return f"<Payment {self.id} {self.amount} ({self.payment_type})>"
+        return f"<Payment {self.id} {self.amount}>"

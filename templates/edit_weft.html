@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Weft - BBBS Management{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4" style="max-width: 700px; margin: auto;">
+        <h3 class="text-center mb-4 text-warning fw-bold">Edit Weft Details for Loom {{ weft.loom.loom_no }}</h3>
+
+```
+    <form method="POST" action="{{ url_for('loom.edit_weft', weft_id=weft.id) }}">
+        <div class="mb-3">
+            <label for="date" class="form-label fw-semibold">Date</label>
+            <input type="date" id="date" name="date" class="form-control"
+                   value="{{ weft.date.strftime('%Y-%m-%d') if weft.date else '' }}" required>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="zari" class="form-label fw-semibold">Zari</label>
+                <input type="text" id="zari" name="zari" class="form-control"
+                       value="{{ weft.zari }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="silk" class="form-label fw-semibold">Silk </label>
+                <input type="text" id="silk" name="silk" class="form-control"
+                       value="{{ weft.silk }}" required>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('loom.materials', loom_id=weft.loom_id) }}"
+               class="btn btn-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-warning px-4 fw-semibold">Update Weft</button>
+        </div>
+    </form>
+</div>
+```
+
+</div>
+{% endblock %}

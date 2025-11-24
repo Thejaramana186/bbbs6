@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required
 from app import db
 from models.payments import Payment
@@ -7,12 +7,12 @@ from datetime import datetime
 payments_bp = Blueprint("payments", __name__, url_prefix="/payments")
 
 
-# ---------------------------------------------------
-# LIST ALL PAYMENT DATES
-# ---------------------------------------------------
+# ======================================================
+# 1. LIST ALL PAYMENT DATES (GROUPED BY DATE)
+# ======================================================
 @payments_bp.route("/")
 @login_required
-def list_payments():
+def list_payment_dates():
     """
     Show all distinct dates where payments exist.
     """
@@ -31,23 +31,31 @@ def list_payments():
     )
 
 
-# ---------------------------------------------------
-# VIEW PAYMENTS OF SPECIFIC DATE (COMBINED TABLE)
-# ---------------------------------------------------
-@payments_bp.route("/view/<date>")
+# ======================================================
+# 2. VIEW ALL PAYMENTS OF A SPECIFIC DATE
+# ======================================================
+@payments_bp.route("/view/<date_str>")
 @login_required
-def payments_by_date(date):
+def payments_by_date(date_str):
+    """
+    Display all payments on a specific date.
+    """
 
-    # Convert URL date string -> Python date
+    # Convert URL date string → Python date
     try:
-        selected_date = datetime.strptime(date, "%Y-%m-%d").date()
-    except:
-        return "Invalid Date Format", 400
+        selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        flash("Invalid date format.", "danger")
+        return redirect(url_for("payments.list_payment_dates"))
 
-    # Fetch all payments of that date
-    all_payments = Payment.query.filter_by(date=selected_date).all()
+    # Fetch all payments for this date
+    all_payments = (
+        Payment.query
+        .filter_by(date=selected_date)
+        .order_by(Payment.id.desc())
+        .all()
+    )
 
-    # Render page with the combined list
     return render_template(
         "payments/payments_view_by_date.html",
         date=selected_date,

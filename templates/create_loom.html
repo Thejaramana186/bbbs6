@@ -4,9 +4,10 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="fas fa-plus-circle me-2"></i>
+    <h2 class="mb-4">
+        <i class="fas fa-plus-circle me-2"></i>
         {% if weaver %}
-            Create Loom for {{ weaver.name }}
+            Create Loom for {{ weaver.weavername }}
         {% else %}
             Create Loom
         {% endif %}
@@ -16,18 +17,27 @@
         <form method="POST" 
               action="{% if weaver %}{{ url_for('loom.create_loom', weaver_id=weaver.id) }}{% else %}{{ url_for('loom.create_loom') }}{% endif %}">
 
-            <div class="form-group">
-    <label for="weaver_name">Weaver Name</label>
-    <input type="text" class="form-control" name="weaver_name" placeholder="Enter Weaver Name">
-</div>
-
-
+            <!-- Select Weaver -->
+            {% if not weaver %}
+            <div class="mb-3">
+                <label class="form-label">Select Weaver</label>
+                <select name="weaver_id" class="form-select">
+                    <option value="">-- Select Weaver --</option>
+                    {% for w in weavers %}
+                        <option value="{{ w.id }}">{{ w.weavername }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+                <!-- If create_loom/<weaver_id>, store weaver automatically -->
+                <input type="hidden" name="weaver_id" value="{{ weaver.id }}">
+            {% endif %}
 
             <!-- Loom Type -->
             <div class="mb-3">
-                <label class="form-label">Loom</label>
+                <label class="form-label">Loom Type</label>
                 <select name="loom_type" class="form-select" required>
-                    <option value="">-- Select Loom --</option>
+                    <option value="">-- Select Loom Type --</option>
                     <option value="Handloom">Handloom</option>
                     <option value="Powerloom">Powerloom</option>
                     <option value="Outsideloom">Outsideloom</option>
@@ -40,11 +50,13 @@
                 <input type="number" name="num_sarees" class="form-control" placeholder="Enter number of sarees" required>
             </div>
 
-            <!-- Type of Saree -->
+            <!-- Saree Type -->
             <div class="mb-3">
-                <label class="form-label">Type of Saree</label>
+                <label class="form-label">Saree Type</label>
                 <input type="text" name="saree_type" class="form-control" placeholder="e.g. Silk, Cotton, etc." required>
             </div>
+
+            
 
             <!-- Buttons -->
             <div class="d-flex justify-content-between">
@@ -53,6 +65,7 @@
                 {% else %}
                     <a href="{{ url_for('loom.looms') }}" class="btn btn-secondary">Cancel</a>
                 {% endif %}
+
                 <button type="submit" class="btn btn-success">
                     <i class="fas fa-check me-1"></i> Create
                 </button>

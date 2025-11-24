@@ -3,8 +3,8 @@
 {% block title %}Materials for Loom - BBBS Management{% endblock %}
 
 {% block content %}
+
 <style>
-/* === General Table & Card Styling === */
 .table th, .table td {
     vertical-align: middle !important;
     text-align: center;
@@ -13,8 +13,6 @@
     font-size: 1rem;
     border-bottom: 2px solid #ddd;
 }
-
-/* === Color Box Styling === */
 .color-box {
     text-align: center;
 }
@@ -25,179 +23,219 @@
     border: 1px solid #999;
     border-radius: 6px;
     margin-bottom: 4px;
-    vertical-align: middle;
 }
 .color-label {
     display: block;
     font-weight: 600;
     font-size: 0.9rem;
     color: #333;
-    text-align: center;
 }
-
-/* === Table Header Contrast === */
 .table thead th {
     background-color: #f4f4f4 !important;
     font-weight: 600;
 }
-
-/* === Card Spacing === */
 .card {
     border-radius: 10px;
 }
 </style>
 
 <div class="container mt-4">
+
     <h2 class="text-center mb-4 fw-bold text-primary">
         Materials for Loom {{ loom.loom_no }}
     </h2>
 
-    <div class="row d-flex align-items-stretch">
+<div class="row d-flex align-items-stretch">
 
-        <!-- ========== WARP DETAILS ========== -->
-        <div class="col-md-4 mb-4 d-flex">
-            <div class="card shadow-sm flex-fill">
-                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
-                    <span>Warp Details</span>
-                    {% if not warps %}
-                        <a href="{{ url_for('loom.add_warp', loom_id=loom.id) }}" class="btn btn-sm btn-light fw-semibold">
-                            Add
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered text-center align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th colspan="3" class="bg-light">Zari</th>
-                                <th colspan="3" class="bg-light">Silk</th>
-                            </tr>
-                            <tr>
-                                <th>Border (L)</th>
-                                <th>Border (R)</th>
-                                <th>Body</th>
-                                <th>Border (L)</th>
-                                <th>Border (R)</th>
-                                <th>Body</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if warps %}
-                                {% for warp in warps %}
-                                    <tr>
-                                        <td>{{ warp.zari_border_left }}</td>
-                                        <td>{{ warp.zari_border_right }}</td>
-                                        <td>{{ warp.zari_body }}</td>
-                                        <td>{{ warp.silk_border_left }}</td>
-                                        <td>{{ warp.silk_border_right }}</td>
-                                        <td>{{ warp.silk_body }}</td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="6" class="text-muted">No warp data available</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <!-- ========== WEFT DETAILS ========== -->
-        <div class="col-md-4 mb-4 d-flex">
-            <div class="card shadow-sm flex-fill">
-                <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
-                    <span>Weft Details</span>
-                    <a href="{{ url_for('loom.add_weft', loom_id=loom.id) }}" class="btn btn-sm btn-light fw-semibold">
-                        Add
-                    </a>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered text-center align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Date</th>
-                                <th>Zari</th>
-                                <th>Silk</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if wefts %}
-                                {% for weft in wefts %}
-                                    <tr>
-                                        <td>{{ weft.date.strftime('%d-%m-%Y') if weft.date else '' }}</td>
-                                        <td>{{ weft.zari }}</td>
-                                        <td>{{ weft.silk }}</td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-muted">No weft data available</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========== WARP COLORS ========== -->
-        <!-- ========== WARP COLORS ========== -->
+<!-- ================= WARP DETAILS ================= -->
 <div class="col-md-4 mb-4 d-flex">
     <div class="card shadow-sm flex-fill">
-        <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
-            <span>Warp Colors</span>
-            {% if not colors %}
-                <a href="{{ url_for('loom.add_colors', loom_id=loom.id) }}" class="btn btn-sm btn-dark fw-semibold">
-                    Add
-                </a>
+
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+            <span>Warp Details</span>
+            {% if not warps %}
+                <a href="{{ url_for('loom.add_warp', loom_id=loom.id) }}"
+                   class="btn btn-sm btn-light fw-semibold">Add</a>
+            {% else %}
+                <a href="{{ url_for('loom.edit_warp', loom_id=loom.id) }}"
+                   class="btn btn-sm btn-warning fw-semibold text-dark">Edit</a>
             {% endif %}
         </div>
+
         <div class="card-body">
             <table class="table table-bordered text-center align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Border</th>
+                        <th colspan="3">Zari</th>
+                        <th colspan="3">Silk</th>
+                    </tr>
+                    <tr>
+                        <th>Border (R)</th>
+                        <th>Border (L)</th>
+                        <th>Body</th>
+                        <th>Border (R)</th>
+                        <th>Border (L)</th>
                         <th>Body</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% if colors %}
-                        {% for color in colors %}
+                    {% if warps %}
+                        {% for warp in warps %}
                             <tr>
-                                <!-- Border Color -->
-                                <td>
-                                    <div class="color-box">
-                                        <div class="color-swatch"
-                                             style="background-color: {{ all_colors.get(color.border_color, '#fff') }};">
-                                        </div>
-                                        <span class="color-label">{{ color.border_color }}</span>
-                                    </div>
-                                </td>
-
-                                <!-- Body Color -->
-                                <td>
-                                    <div class="color-box">
-                                        <div class="color-swatch"
-                                             style="background-color: {{ all_colors.get(color.body_color, '#fff') }};">
-                                        </div>
-                                        <span class="color-label">{{ color.body_color }}</span>
-                                    </div>
-                                </td>
+                                <td>{{ warp.zari_border_right }}</td>
+                                <td>{{ warp.zari_border_left }}</td>
+                                <td>{{ warp.zari_body }}</td>
+                                <td>{{ warp.silk_border_right }}</td>
+                                <td>{{ warp.silk_border_left }}</td>
+                                <td>{{ warp.silk_body }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr>
-                            <td colspan="2" class="text-muted">No color data available</td>
-                        </tr>
+                        <tr><td colspan="6" class="text-muted">No warp data available</td></tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+
     </div>
 </div>
 
-    </div> <!-- /.row -->
-</div> <!-- /.container -->
+
+
+<!-- ================= WEFT DETAILS ================= -->
+<div class="col-md-4 mb-4 d-flex">
+    <div class="card shadow-sm flex-fill">
+
+        <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+            <span>Weft Details</span>
+            <a href="{{ url_for('loom.add_weft', loom_id=loom.id) }}" class="btn btn-sm btn-light fw-semibold">
+                Add
+            </a>
+        </div>
+
+        <div class="card-body">
+            <table class="table table-bordered text-center align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Zari</th>
+                        <th>Silk</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if wefts %}
+                        {% for weft in wefts %}
+                            <tr>
+                                <td>{{ weft.date.strftime('%d-%m-%Y') if weft.date else '' }}</td>
+                                <td>{{ weft.zari }}</td>
+                                <td>{{ weft.silk }}</td>
+                                <td>
+                                    <a href="{{ url_for('loom.edit_weft', weft_id=weft.id) }}"
+                                       class="btn btn-sm btn-warning fw-semibold">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="4" class="text-muted">No weft data available</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+
+<!-- ================= WEFT COLOR DETAILS (COLOR BOX TABLE) ================= -->
+
+<div class="container mt-4">
+
+<h3 class="fw-bold text-center mb-4">{{ loom.loom_no }} – Materials</h3>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-info fw-bold d-flex justify-content-between align-items-center">
+        <span>Weft Colors</span>
+        <a href="{{ url_for('loom.add_weft_color', loom_id=loom.id) }}" class="btn btn-sm btn-dark">Add</a>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-bordered mb-0 text-center align-middle">
+
+            <thead class="table-light">
+                <tr>
+                    <th rowspan="2">No. of Sarees</th>
+                    <th rowspan="2">Border</th>
+                    <th rowspan="2">Body</th>
+                    <th colspan="4">Meena</th>
+                    <th rowspan="2">Action</th>
+                </tr>
+
+                <tr>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>C</th>
+                    <th>D</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% if weft_colors %}
+                    {% for wc in weft_colors %}
+                    <tr>
+                        <td>{{ wc.no_of_sarees }}</td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.border_color_code }}"></div>
+                            <div class="color-label">{{ wc.border_weft }}</div>
+                        </td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.body_color_code }}"></div>
+                            <div class="color-label">{{ wc.body_weft }}</div>
+                        </td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.meena_a_code }}"></div>
+                            <div class="color-label">{{ wc.meena_a }}</div>
+                        </td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.meena_b_code }}"></div>
+                            <div class="color-label">{{ wc.meena_b }}</div>
+                        </td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.meena_c_code }}"></div>
+                            <div class="color-label">{{ wc.meena_c }}</div>
+                        </td>
+
+                        <td>
+                            <div class="color-swatch" style="background: {{ wc.meena_d_code }}"></div>
+                            <div class="color-label">{{ wc.meena_d }}</div>
+                        </td>
+
+                        <td>
+                            <a href="{{ url_for('loom.edit_weft_color', id=wc.id) }}"
+                                class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-muted">No Weft Color Data Found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+</div>
+
 {% endblock %}

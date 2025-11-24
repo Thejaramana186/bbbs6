@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Edit Warp - Loom {{ loom.loom_no }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="fw-bold text-primary">Edit Warp for Loom {{ loom.loom_no }}</h3>
+
+    <form method="POST" class="mt-4">
+
+        <div class="row">
+            <h5 class="fw-bold mt-3">Zari</h5>
+
+            <div class="col-md-4">
+                <label>Border (Right)</label>
+                <input type="text" name="zari_border_right" class="form-control"
+                       value="{{ warp.zari_border_right }}">
+            </div>
+
+            <div class="col-md-4">
+                <label>Border (Left)</label>
+                <input type="text" name="zari_border_left" class="form-control"
+                       value="{{ warp.zari_border_left }}">
+            </div>
+
+            <div class="col-md-4">
+                <label>Body</label>
+                <input type="text" name="zari_body" class="form-control"
+                       value="{{ warp.zari_body }}">
+            </div>
+
+            <h5 class="fw-bold mt-4">Silk</h5>
+
+            <div class="col-md-4">
+                <label>Border (Right)</label>
+                <input type="text" name="silk_border_right" class="form-control"
+                       value="{{ warp.silk_border_right }}">
+            </div>
+
+            <div class="col-md-4">
+                <label>Border (Left)</label>
+                <input type="text" name="silk_border_left" class="form-control"
+                       value="{{ warp.silk_border_left }}">
+            </div>
+
+            <div class="col-md-4">
+                <label>Body</label>
+                <input type="text" name="silk_body" class="form-control"
+                       value="{{ warp.silk_body }}">
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-success px-4">Save Changes</button>
+            <a href="{{ url_for('loom.materials', loom_id=loom.id) }}"
+               class="btn btn-secondary px-4">Cancel</a>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
