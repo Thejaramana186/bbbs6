@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Outside Powerloom Sarees{% endblock %}
+
+{% block content %}
+<h1>Outside Powerloom Sarees</h1>
+
+<div class="top-bar">
+    <div class="filter-button">
+        <button onclick="toggleFilterMenu()">Filter ▾</button>
+        <div id="filterMenu" class="dropdown">
+            <a href="?range=all">All</a>
+            <a href="?range=1d">1 Day</a>
+            <a href="?range=1w">1 Week</a>
+            <a href="?range=2w">2 Weeks</a>
+            <a href="?range=1m">1 Month</a>
+            <a href="?range=6m">6 Months</a>
+            <a href="?range=1y">1 Year</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.top-bar { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.filter-button button {
+    padding: 8px 16px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.dropdown {
+    display: none;
+    position: absolute;
+    right: 10px;
+    margin-top: 5px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 150px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+}
+.dropdown a {
+    padding: 10px;
+    display: block;
+    font-size: 14px;
+    color: #333;
+}
+.gallery {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 10px;
+}
+.gallery-item {
+    min-width: 150px;
+    max-width: 150px;
+    background: #f8f8f8;
+    padding: 5px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    text-decoration: none;
+    color: inherit;
+}
+.gallery-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.gallery-title { margin-top: 6px; font-size: 14px; }
+.gallery-date { font-size: 12px; color: #777; }
+.date-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 10px;
+    color: #444;
+    border-left: 4px solid #1976d2;
+    padding-left: 10px;
+}
+</style>
+
+<script>
+function toggleFilterMenu() {
+    const m = document.getElementById("filterMenu");
+    m.style.display = (m.style.display === "block" ? "none" : "block");
+}
+document.addEventListener("click", (e) => {
+    if (!document.querySelector(".filter-button").contains(e.target))
+        document.getElementById("filterMenu").style.display = "none";
+});
+</script>
+
+{% for date, items in grouped_sarees|dictsort(reverse=true) %}
+    <div class="date-header">{{ date }}</div>
+
+    <div class="gallery">
+        {% for saree in items %}
+            <a href="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}"
+               target="_blank"
+               class="gallery-item">
+
+                <img src="{{ url_for('static', filename='uploads/' ~ saree.saree_image) }}">
+                <div class="gallery-title">{{ saree.saree_name }}</div>
+                <div class="gallery-date">{{ date }}</div>
+
+            </a>
+        {% endfor %}
+    </div>
+{% endfor %}
+
+{% endblock %}

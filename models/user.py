@@ -15,7 +15,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+    role = db.Column(db.String(20), default="user")
+    last_login = db.Column(db.DateTime, nullable=True)   # ⭐ Add this
+
     # Relationships
     looms = db.relationship('Loom', backref='user', lazy=True, cascade='all, delete-orphan')
     weavers = db.relationship('Weaver', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -34,3 +36,17 @@ class User(UserMixin, db.Model):
     
     def __repr__(self):
         return f'<User {self.username}>'
+    
+
+
+
+class Activity(db.Model):
+    __tablename__ = "activities"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    username = db.Column(db.String(80))
+    action = db.Column(db.String(50))  # "login" or "register"
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="activities")

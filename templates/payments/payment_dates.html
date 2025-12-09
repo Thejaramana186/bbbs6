@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Payments{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Heading Color */
+    .payments-title {
+        color: #FF6600;     /* 🔶 Orange heading */
+        font-weight: 700;
+    }
+
+    /* View Button */
+    .btn-view {
+        background-color: #28A745;   /* 🟢 Green View button */
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 6px 18px;
+        border: none;
+        transition: 0.2s;
+    }
+    .btn-view:hover {
+        background-color: #1e7e34;
+        color: #fff;
+    }
+
+    .date-card {
+        border-radius: 10px;
+        transition: 0.2s;
+    }
+
+    .date-card:hover {
+        transform: scale(1.03);
+    }
+</style>
+
+
+<div class="container mt-4">
+
+    <h2 class="payments-title mb-4">Payments</h2>
+
+    <!-- If No Dates -->
+    {% if payment_dates|length == 0 %}
+        <div class="alert alert-warning text-center fw-bold">
+            No payments recorded yet.
+        </div>
+    {% endif %}
+
+    <div class="row">
+        {% for d in payment_dates %}
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm p-3 text-center date-card">
+
+                <h5 class="fw-bold">
+                    {{ d.strftime('%d-%m-%Y') }}
+                </h5>
+
+                <a href="{{ url_for('payments.payments_by_date', date_str=d) }}"
+                   class="btn-view mt-2">
+                    View
+                </a>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

@@ -151,7 +151,7 @@
 
 
 
-<!-- ================= WEFT COLOR DETAILS (COLOR BOX TABLE) ================= -->
+<!-- ================= WEFT COLOR DETAILS ================= -->
 
 <div class="container mt-4">
 
@@ -189,33 +189,51 @@
                     <tr>
                         <td>{{ wc.no_of_sarees }}</td>
 
+                        <!-- BORDER -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.border_color_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.border_color_code or all_colors.get(wc.border_weft, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.border_weft }}</div>
                         </td>
 
+                        <!-- BODY -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.body_color_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.body_color_code or all_colors.get(wc.body_weft, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.body_weft }}</div>
                         </td>
 
+                        <!-- MEENA A -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.meena_a_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.meena_a_code or all_colors.get(wc.meena_a, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.meena_a }}</div>
                         </td>
 
+                        <!-- MEENA B -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.meena_b_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.meena_b_code or all_colors.get(wc.meena_b, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.meena_b }}</div>
                         </td>
 
+                        <!-- MEENA C -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.meena_c_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.meena_c_code or all_colors.get(wc.meena_c, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.meena_c }}</div>
                         </td>
 
+                        <!-- MEENA D -->
                         <td>
-                            <div class="color-swatch" style="background: {{ wc.meena_d_code }}"></div>
+                            <div class="color-swatch"
+                                 style="background: {{ wc.meena_d_code or all_colors.get(wc.meena_d, '#fff') }}">
+                            </div>
                             <div class="color-label">{{ wc.meena_d }}</div>
                         </td>
 

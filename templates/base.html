@@ -41,14 +41,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.dashboard') }}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('loom.looms') }}">Looms</a></li>
+                    
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('weaver.list_weavers') }}">Weaver</a></li>
-
-
                 </ul>
 
                 <ul class="navbar-nav align-items-center">
-                    <!-- 🔔 Notification Bell -->
+                    <!-- Notification Bell -->
                     <li class="nav-item dropdown me-3">
                         <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-bell"></i>
@@ -63,7 +61,7 @@
                         </ul>
                     </li>
 
-                    <!-- 👤 User Dropdown -->
+                    <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ current_user.firstname }}
@@ -102,7 +100,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-    <!-- 🔔 Notification Fetch Script -->
+    <!-- Notification Fetch Script -->
     <script>
     async function fetchNotifications() {
         try {
@@ -113,7 +111,6 @@
             const badge = document.getElementById("notification-count");
             const noNotif = document.getElementById("no-notifications");
 
-            // Remove old messages except header & divider
             dropdownMenu.querySelectorAll("li:not(:first-child):not(:nth-child(2))").forEach(el => el.remove());
 
             const notifications = data.notifications || [];
@@ -141,7 +138,7 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         fetchNotifications();
-        setInterval(fetchNotifications, 30000); // Refresh every 30s
+        setInterval(fetchNotifications, 30000);
     });
     </script>
 

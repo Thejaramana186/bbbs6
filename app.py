@@ -3,14 +3,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_mail import Mail
 from config import Config
 
 # =====================================================
 # Initialize Flask extensions
 # =====================================================
 db = SQLAlchemy()
-login_manager = LoginManager()
 migrate = Migrate()
+login_manager = LoginManager()
+mail = Mail()  # <-- Added for email/OTP support
 
 # =====================================================
 # Application Factory
@@ -39,6 +41,7 @@ def create_app(config_name=None):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    mail.init_app(app)  # <-- Attach mail to app
 
     # -------------------------------------------------
     # Flask-Login Configuration
@@ -63,11 +66,14 @@ def create_app(config_name=None):
     from controllers.payments_controller import payments_bp
 
     app.register_blueprint(payments_bp)
-
     app.register_blueprint(auth_bp)
     app.register_blueprint(loom_bp)
     app.register_blueprint(weaver_bp)
     app.register_blueprint(notification_bp)
+    
+
+
+
 
     # -------------------------------------------------
     # Import Models for Flask-Migrate Auto-Detection
@@ -75,13 +81,9 @@ def create_app(config_name=None):
     from models.user import User
     from models.loom import Loom
     from models.weaver import Weaver
-    # from models.notification import Notification  # Uncomment if needed
+    # from models.notification import Notification
 
-    # -------------------------------------------------
-    # Return configured app
-    # -------------------------------------------------
     return app
-
 
 # =====================================================
 # Flask CLI Integration (for `flask db` commands)

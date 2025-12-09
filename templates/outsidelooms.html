@@ -4,7 +4,10 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-warehouse me-2"></i>Outside Looms</h2>
+    <h2><i class="fas fa-warehouse me-2"></i>Outside handlooms</h2>
+    <a href="{{ url_for('loom.create_outsideloom', loom_type='Outsideloom') }}" class="btn btn-primary">
+    + Create Outsideloom
+</a>
 </div>
 
 {% if looms %}

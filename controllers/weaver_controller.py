@@ -19,16 +19,31 @@ def allowed_file(filename):
 
 
 # -------------------------------------------------
+# AUTO ROLE CHECK: OWNER CAN ACCESS ALL
+# -------------------------------------------------
+def get_weaver_or_404(weaver_id):
+    if getattr(current_user, "role", "").lower() == "owner":
+        return Weaver.query.filter_by(id=weaver_id).first_or_404()
+
+    return Weaver.query.filter_by(id=weaver_id, user_id=current_user.id).first_or_404()
+
+
+# -------------------------------------------------
 # LIST WEAVERS
 # -------------------------------------------------
 @weaver_bp.route('/')
 @login_required
 def list_weavers():
-    weavers = (
-        Weaver.query.filter_by(user_id=current_user.id)
-        .order_by(Weaver.created_at.desc())
-        .all()
-    )
+
+    if getattr(current_user, "role", "").lower() == "owner":
+        weavers = Weaver.query.order_by(Weaver.created_at.desc()).all()
+    else:
+        weavers = (
+            Weaver.query.filter_by(user_id=current_user.id)
+            .order_by(Weaver.created_at.desc())
+            .all()
+        )
+
     return render_template('weaver.html', weavers=weavers)
 
 
@@ -79,7 +94,6 @@ def create_weaver():
                 skills=skills,
                 aadharcard=aadharcard_filename,
                 user_id=current_user.id,
-
                 account_number=account_number,
                 ifsc_code=ifsc_code,
                 account_type=account_type,
@@ -107,7 +121,7 @@ def create_weaver():
 @weaver_bp.route('/view/<int:id>')
 @login_required
 def view_weaver(id):
-    weaver = Weaver.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    weaver = get_weaver_or_404(id)
     return render_template('view_weaver.html', weaver=weaver)
 
 
@@ -117,7 +131,7 @@ def view_weaver(id):
 @weaver_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_weaver(id):
-    weaver = Weaver.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    weaver = get_weaver_or_404(id)
 
     if request.method == 'POST':
         try:
@@ -178,7 +192,7 @@ def edit_weaver(id):
 @weaver_bp.route('/toggle/<int:id>', methods=['POST'])
 @login_required
 def toggle_status(id):
-    weaver = Weaver.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    weaver = get_weaver_or_404(id)
 
     try:
         weaver.is_active = not weaver.is_active
@@ -201,7 +215,7 @@ def toggle_status(id):
 @weaver_bp.route('/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_weaver(id):
-    weaver = Weaver.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    weaver = get_weaver_or_404(id)
 
     try:
         if weaver.aadharcard:

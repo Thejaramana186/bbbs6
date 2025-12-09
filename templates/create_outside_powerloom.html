@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Create Outside Powerloom{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-industry me-2"></i>
+        Create Outside Powerloom
+    </h2>
+
+    <div class="card shadow-sm p-4">
+        <form method="POST" action="{{ url_for('loom.create_outside_powerloom') }}">
+
+            <!-- Weaver Selection -->
+            <div class="mb-3">
+                <label class="form-label">Select Weaver</label>
+                <select name="weaver_id" class="form-select" required>
+                    <option value="">-- Select Weaver --</option>
+                    {% for w in weavers %}
+                        <option value="{{ w.id }}">{{ w.weavername }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Loom Type -->
+            <div class="mb-3">
+                <label class="form-label">Loom Type</label>
+                <input type="text" class="form-control" value="OutsidePowerloom" disabled>
+                <input type="hidden" name="loom_type" value="OutsidePowerloom">
+            </div>
+
+            <!-- Location -->
+            <div class="mb-3">
+                <label class="form-label">Location</label>
+                <input type="text" name="location" class="form-control" placeholder="Enter location" required>
+            </div>
+
+            <!-- Number of Sarees -->
+            <div class="mb-3">
+                <label class="form-label">Number of Sarees</label>
+                <input type="number" name="num_sarees" class="form-control" required>
+            </div>
+
+            <!-- Saree Type -->
+            <div class="mb-3">
+                <label class="form-label">Saree Type</label>
+                <input type="text" name="saree_type" class="form-control" required>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <a href="{{ url_for('loom.outside_powerlooms') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i> Create
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

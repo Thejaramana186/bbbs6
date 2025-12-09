@@ -15,8 +15,12 @@ from app import db
 
 # MODELS
 from models.loom import WeftColor
+from models.weaver import Weaver
+
+from models.loom import SareeEntry
 
 
+from datetime import datetime, timedelta, date
 from models.loom import Loom, Warp, Weft, WarpColor, SareeEntry
 from models.weaver import Weaver
 from models.payments import Payment   # <-- Correct Payment import
@@ -27,11 +31,11 @@ loom_bp = Blueprint("loom", __name__, url_prefix="/loom")
 # Color Dictionary (Centralized)
 # -------------------------------
 ALL_COLORS = {
-    '1M': '#dedd9a',
-    '2M': '#dbd388',
-    '3M': '#beaa63',
-    '4M': '#c1893c',
-    '5M': '#ae6942',
+    '1M': '#ddd9ad',
+    '2M': '#d9cf93',
+    '3M': '#ded2ac',
+    '4M': '#dcba73',
+    '5M': '#d29463',
     '6M': '#c69057',
     '7M': '#c68697',
     '8M': '#6f3b47',
@@ -1633,16 +1637,20 @@ def edit_warp(loom_id):
 # ---------------------------
 # Materials page
 # ---------------------------
-@loom_bp.route("/loom/<int:loom_id>/materials")
+@loom_bp.route("/<int:loom_id>/materials")
+
 @login_required
 def materials(loom_id):
-    loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
+    # Owners can view ALL looms
+    if current_user.role == "owner":
+      loom = Loom.query.filter_by(id=loom_id).first_or_404()
+    else:
+     loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
+
 
     warps = Warp.query.filter_by(loom_id=loom.id).all()
     wefts = Weft.query.filter_by(loom_id=loom.id).all()
     colors = WarpColor.query.filter_by(loom_id=loom.id).all()
-    
-    # 🔥 FIX: Add WeftColor query
     weft_colors = WeftColor.query.filter_by(loom_id=loom.id).all()
 
     return render_template(
@@ -1651,9 +1659,10 @@ def materials(loom_id):
         warps=warps,
         wefts=wefts,
         colors=colors,
-        weft_colors=weft_colors,   # 🔥 Pass to HTML
+        weft_colors=weft_colors,
         all_colors=ALL_COLORS,
     )
+
 
 
 
@@ -1680,76 +1689,12 @@ def add_warp(loom_id):
     return render_template("add_warp.html", loom_id=loom_id)
 
 
-# ---------------------------
-# Loom list
-# ---------------------------
-@loom_bp.route("/looms")
-@login_required
-def looms():
-    looms = (
-        Loom.query.filter_by(user_id=current_user.id)
-        .order_by(Loom.created_at.desc())
-        .all()
-    )
-    return render_template("looms.html", looms=looms)
 
 
 # ---------------------------
 # Create loom (optional preselect weaver)
 # ---------------------------
-@loom_bp.route("/create_loom", methods=["GET", "POST"])
-@loom_bp.route("/create_loom/<int:weaver_id>", methods=["GET", "POST"])
-@login_required
-def create_loom(weaver_id=None):
-    weaver = None
-    weavers = []
 
-    if weaver_id:
-        weaver = Weaver.query.get_or_404(weaver_id)
-    else:
-        weavers = Weaver.query.filter_by(user_id=current_user.id, is_active=True).all()
-
-    if request.method == "POST":
-        try:
-            loom_type = request.form.get("loom_type")
-            saree_type = request.form.get("saree_type")
-            saree_name = request.form.get("saree_name")
-            
-            weaver_id = request.form.get("weaver_id")
-
-            num_sarees = int(request.form.get("num_sarees") or 0)
-
-            last_loom = (
-                Loom.query.filter_by(user_id=current_user.id)
-                .order_by(Loom.loom_no.desc())
-                .first()
-            )
-            next_loom_no = 1 if not last_loom else last_loom.loom_no + 1
-
-            new_loom = Loom(
-                loom_no=next_loom_no,
-                user_id=current_user.id,
-                loom_type=loom_type,
-                num_sarees=num_sarees,
-                saree_type=saree_type,
-                saree_name=saree_name,
-                
-                weaver_id=int(weaver_id) if weaver_id else None,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
-            )
-
-            db.session.add(new_loom)
-            db.session.commit()
-            flash("Loom created successfully!", "success")
-            return redirect(url_for("loom.looms"))
-
-        except Exception as e:
-            db.session.rollback()
-            traceback.print_exc()
-            flash(f"Failed to create loom: {e}", "danger")
-
-    return render_template("create_loom.html", weaver=weaver, weavers=weavers)
 
 
 # ---------------------------
@@ -1758,14 +1703,20 @@ def create_loom(weaver_id=None):
 @loom_bp.route("/<int:loom_id>")
 @login_required
 def view_loom(loom_id):
-    loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
+
+    # If current user is Owner, allow full access
+    if current_user.role == "owner":
+        loom = Loom.query.filter_by(id=loom_id).first_or_404()
+    else:
+        # normal user – can only access own looms
+        loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
+
     sarees = (
         SareeEntry.query.filter_by(loom_id=loom.id)
         .order_by(SareeEntry.saree_number)
         .all()
     )
 
-    # Attach readable color info
     for s in sarees:
         s.border_hex = ALL_COLORS.get(s.border_color, "#ffffff")
         s.body_hex = ALL_COLORS.get(s.body_color, "#ffffff")
@@ -1835,7 +1786,7 @@ def delete_loom(loom_id):
 @loom_bp.route("/<int:loom_id>/add_saree", methods=["GET", "POST"])
 @login_required
 def add_saree(loom_id):
-    loom = Loom.query.filter_by(id=loom_id, user_id=current_user.id).first_or_404()
+    loom = Loom.query.filter_by(id=loom_id).first_or_404()
 
     if request.method == "POST":
         try:
@@ -1938,6 +1889,10 @@ def add_saree(loom_id):
         all_colors=ALL_COLORS
     )
 
+@loom_bp.route("/sarees")
+def sarees():
+    # If you don't have a Saree model yet, just send an empty list for now
+    return render_template("sarees/list_sarees.html")
 
 # ---------------------------
 # Edit saree (does not update payment records automatically)
@@ -2053,28 +2008,9 @@ def download(loom_id):
     )
 
 
-# ---------------------------
-# Category filters
-# ---------------------------
-@loom_bp.route("/handlooms")
-@login_required
-def handlooms():
-    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Handloom").order_by(Loom.created_at.desc()).all()
-    return render_template("handlooms.html", looms=looms)
 
 
-@loom_bp.route("/powerlooms")
-@login_required
-def powerlooms():
-    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Powerloom").order_by(Loom.created_at.desc()).all()
-    return render_template("powerlooms.html", looms=looms)
 
-
-@loom_bp.route("/outsidelooms")
-@login_required
-def outsidelooms():
-    looms = Loom.query.filter_by(user_id=current_user.id, loom_type="Outsideloom").order_by(Loom.created_at.desc()).all()
-    return render_template("outsidelooms.html", looms=looms)
 
 
 @loom_bp.route("/loom/<int:loom_id>/add_weft_color", methods=["GET", "POST"])
@@ -2137,5 +2073,426 @@ def edit_weft_color(id):
         "edit_weft_color.html",
         wc=wc,
         loom=loom,
-        all_colors=all_colors
+        all_colors=ALL_COLORS
+    )
+
+
+
+# ==========================================================
+#   AUTO-INCREMENT LOOM NUMBER PER LOOM TYPE
+# ==========================================================
+def generate_loom_no(loom_type):
+    last_loom = Loom.query.filter_by(loom_type=loom_type).order_by(Loom.loom_no.desc()).first()
+
+    if not last_loom:
+        return 1
+
+    return last_loom.loom_no + 1
+
+
+# ==========================================================
+#   GET WEAVERS (OWNER = ALL, OTHERS = OWN)
+# ==========================================================
+def get_allowed_weavers():
+    if current_user.role == "owner":
+        return Weaver.query.filter_by(is_active=True).all()
+    else:
+        return Weaver.query.filter_by(user_id=current_user.id, is_active=True).all()
+
+
+# ==========================================================
+#   GET LOOMS (OWNER = ALL, OTHERS = OWN)
+# ==========================================================
+def get_allowed_looms(loom_type=None):
+    if current_user.role == "owner":
+        if loom_type:
+            return Loom.query.filter_by(loom_type=loom_type).all()
+        return Loom.query.all()
+
+    # Normal user →
+    if loom_type:
+        return Loom.query.filter_by(user_id=current_user.id, loom_type=loom_type).all()
+    return Loom.query.filter_by(user_id=current_user.id).all()
+
+
+# ==========================================================
+#   CREATE HANDLOOM
+# ==========================================================
+@loom_bp.route('/handloom/create', methods=['GET', 'POST'])
+@login_required
+def create_handloom():
+    weaver_id = request.args.get('weaver_id')
+    weavers = get_allowed_weavers()
+
+    weaver = None
+    if weaver_id:
+        # Owner can select any, user can only select own
+        if current_user.role == "owner":
+            weaver = Weaver.query.get(weaver_id)
+        else:
+            weaver = Weaver.query.filter_by(id=weaver_id, user_id=current_user.id).first()
+
+    if request.method == 'POST':
+        try:
+            new_loom = Loom(
+                loom_no=generate_loom_no("Handloom"),
+                loom_type="Handloom",
+                weaver_id=request.form.get("weaver_id"),
+                num_sarees=request.form.get("num_sarees"),
+                saree_type=request.form.get("saree_type"),
+                user_id=current_user.id
+            )
+
+            db.session.add(new_loom)
+            db.session.commit()
+
+            flash("Handloom created successfully!", "success")
+            return redirect(url_for("loom.handlooms"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error: " + str(e), "danger")
+
+    return render_template(
+        'create_handloom.html',
+        weaver=weaver,
+        weavers=weavers
+    )
+
+
+# ==========================================================
+#   LIST HANDLOOMS
+# ==========================================================
+@loom_bp.route('/handlooms')
+@login_required
+def handlooms():
+    looms = get_allowed_looms("Handloom")
+    return render_template("handlooms.html", looms=looms)
+
+
+# ==========================================================
+#   CREATE POWERLOOM
+# ==========================================================
+@loom_bp.route('/powerloom/create', methods=['GET', 'POST'])
+@login_required
+def create_powerloom():
+    weavers = get_allowed_weavers()
+
+    if request.method == 'POST':
+        try:
+            new_loom = Loom(
+                loom_no=generate_loom_no("Powerloom"),
+                loom_type="Powerloom",
+                weaver_id=request.form.get("weaver_id"),
+                num_sarees=request.form.get("num_sarees"),
+                saree_type=request.form.get("saree_type"),
+                user_id=current_user.id
+            )
+
+            db.session.add(new_loom)
+            db.session.commit()
+
+            flash("Powerloom created successfully!", "success")
+            return redirect(url_for("loom.powerlooms"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error: " + str(e), "danger")
+
+    return render_template("create_powerloom.html", weavers=weavers)
+
+
+# ==========================================================
+#   LIST POWERLOOMS
+# ==========================================================
+@loom_bp.route('/powerlooms')
+@login_required
+def powerlooms():
+    looms = get_allowed_looms("Powerloom")
+    return render_template("powerlooms.html", looms=looms)
+
+
+# ==========================================================
+#   CREATE OUTSIDE HANDLOOM
+# ==========================================================
+@loom_bp.route('/outsideloom/create', methods=['GET', 'POST'])
+@login_required
+def create_outsideloom():
+    weavers = get_allowed_weavers()
+
+    if request.method == "POST":
+        try:
+            loom = Loom(
+                loom_no=generate_loom_no("Outsideloom"),
+                loom_type="Outsideloom",
+                weaver_id=request.form.get("weaver_id"),
+                num_sarees=request.form.get("num_sarees"),
+                saree_type=request.form.get("saree_type"),
+                user_id=current_user.id
+            )
+
+            db.session.add(loom)
+            db.session.commit()
+
+            flash("Outside Handloom created successfully!", "success")
+            return redirect(url_for("loom.outsidelooms"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error: " + str(e), "danger")
+
+    return render_template("create_outsideloom.html", weavers=weavers)
+
+
+# ==========================================================
+#   LIST OUTSIDE HANDLOOMS
+# ==========================================================
+@loom_bp.route('/outsidelooms')
+@login_required
+def outsidelooms():
+    looms = get_allowed_looms("Outsideloom")
+    return render_template("outsidelooms.html", looms=looms)
+
+
+# ==========================================================
+#   CREATE OUTSIDE POWERLOOM
+# ==========================================================
+@loom_bp.route('/outside_powerloom/create', methods=['GET', 'POST'])
+@login_required
+def create_outside_powerloom():
+    weavers = get_allowed_weavers()
+
+    if request.method == "POST":
+        try:
+            loom = Loom(
+                loom_no=generate_loom_no("OutsidePowerloom"),
+                loom_type="OutsidePowerloom",
+                weaver_id=request.form.get("weaver_id"),
+                num_sarees=request.form.get("num_sarees"),
+                saree_type=request.form.get("saree_type"),
+                user_id=current_user.id
+            )
+
+            db.session.add(loom)
+            db.session.commit()
+
+            flash("Outside Powerloom created successfully!", "success")
+            return redirect(url_for("loom.outside_powerlooms"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash("Error: " + str(e), "danger")
+
+    return render_template("create_outside_powerloom.html", weavers=weavers)
+
+
+# ==========================================================
+#   LIST OUTSIDE POWERLOOMS
+# ==========================================================
+@loom_bp.route('/outside_powerlooms')
+@login_required
+def outside_powerlooms():
+    looms = get_allowed_looms("OutsidePowerloom")
+    return render_template("outside_powerlooms.html", looms=looms)
+
+
+@loom_bp.route("/sarees/handloom_factory")
+def handloom_factory_sarees():
+
+    range_option = request.args.get("range", "all")
+    today = date.today()
+
+    filter_date = None
+    if range_option == "1d":
+        filter_date = today - timedelta(days=1)
+    elif range_option == "1w":
+        filter_date = today - timedelta(weeks=1)
+    elif range_option == "2w":
+        filter_date = today - timedelta(weeks=2)
+    elif range_option == "1m":
+        filter_date = today - timedelta(days=30)
+    elif range_option == "6m":
+        filter_date = today - timedelta(days=180)
+    elif range_option == "1y":
+        filter_date = today - timedelta(days=365)
+
+    # ⭐ ALWAYS GET ALL HANDLOOM SAREES (no date filtering)
+    sarees = (
+        SareeEntry.query.join(Loom)
+        .filter(Loom.loom_type == "Handloom")
+        .order_by(SareeEntry.date.desc())
+        .all()
+    )
+
+    # ⭐ TAG SAREES => in_range = True/False
+    for s in sarees:
+        if filter_date:
+            s.in_range = (s.date >= filter_date)
+        else:
+            s.in_range = True   # all for "all" filter
+
+    # ⭐ GROUP BY DATE
+    from collections import defaultdict
+    grouped = defaultdict(list)
+
+    for s in sarees:
+        key = s.date.strftime("%d-%m-%Y")
+        grouped[key].append(s)
+
+    grouped = dict(sorted(grouped.items(), reverse=True))
+
+    return render_template(
+        "sarees/handloom_factory_sarees.html",
+        grouped_sarees=grouped,
+        selected_range=range_option
+    )
+
+
+
+@loom_bp.route("/sarees/powerloom_factory")
+def powerloom_factory_sarees():
+
+    range_option = request.args.get("range", "all")
+    today = date.today()
+
+    filter_date = None
+    if range_option == "1d":
+        filter_date = today - timedelta(days=1)
+    elif range_option == "1w":
+        filter_date = today - timedelta(weeks=1)
+    elif range_option == "2w":
+        filter_date = today - timedelta(weeks=2)
+    elif range_option == "1m":
+        filter_date = today - timedelta(days=30)
+    elif range_option == "6m":
+        filter_date = today - timedelta(days=180)
+    elif range_option == "1y":
+        filter_date = today - timedelta(days=365)
+
+    # GET ALL POWERLOOM FACTORY SAREES
+    sarees = (
+        SareeEntry.query.join(Loom)
+        .filter(Loom.loom_type == "Powerloom")
+        .order_by(SareeEntry.date.desc())
+        .all()
+    )
+
+    # TAG SAREES → in_range True/False
+    for s in sarees:
+        s.in_range = True if not filter_date else (s.date >= filter_date)
+
+    # GROUP BY DATE
+    from collections import defaultdict
+    grouped = defaultdict(list)
+
+    for s in sarees:
+        key = s.date.strftime("%d-%m-%Y")
+        grouped[key].append(s)
+
+    grouped = dict(sorted(grouped.items(), reverse=True))
+
+    return render_template(
+        "sarees/powerloom_factory_sarees.html",
+        grouped_sarees=grouped,
+        selected_range=range_option
+    )
+
+
+
+@loom_bp.route("/sarees/outside_handloom")
+def outside_handloom_sarees():
+
+    range_option = request.args.get("range", "all")
+    today = date.today()
+
+    filter_date = None
+    if range_option == "1d":
+        filter_date = today - timedelta(days=1)
+    elif range_option == "1w":
+        filter_date = today - timedelta(weeks=1)
+    elif range_option == "2w":
+        filter_date = today - timedelta(weeks=2)
+    elif range_option == "1m":
+        filter_date = today - timedelta(days=30)
+    elif range_option == "6m":
+        filter_date = today - timedelta(days=180)
+    elif range_option == "1y":
+        filter_date = today - timedelta(days=365)
+
+    # GET ALL OUTSIDE HANDLOOM SAREES
+    sarees = (
+        SareeEntry.query.join(Loom)
+        .filter(Loom.loom_type == "OutsideHandloom")
+        .order_by(SareeEntry.date.desc())
+        .all()
+    )
+
+    # TAG SAREES
+    for s in sarees:
+        s.in_range = True if not filter_date else (s.date >= filter_date)
+
+    # GROUP BY DATE
+    from collections import defaultdict
+    grouped = defaultdict(list)
+
+    for s in sarees:
+        key = s.date.strftime("%d-%m-%Y")
+        grouped[key].append(s)
+
+    grouped = dict(sorted(grouped.items(), reverse=True))
+
+    return render_template(
+        "sarees/outside_handloom_sarees.html",
+        grouped_sarees=grouped,
+        selected_range=range_option
+    )
+
+
+
+@loom_bp.route("/sarees/outside_powerloom")
+def outside_powerloom_sarees():
+
+    range_option = request.args.get("range", "all")
+    today = date.today()
+
+    filter_date = None
+    if range_option == "1d":
+        filter_date = today - timedelta(days=1)
+    elif range_option == "1w":
+        filter_date = today - timedelta(weeks=1)
+    elif range_option == "2w":
+        filter_date = today - timedelta(weeks=2)
+    elif range_option == "1m":
+        filter_date = today - timedelta(days=30)
+    elif range_option == "6m":
+        filter_date = today - timedelta(days=180)
+    elif range_option == "1y":
+        filter_date = today - timedelta(days=365)
+
+    # GET ALL OUTSIDE POWERLOOM SAREES
+    sarees = (
+        SareeEntry.query.join(Loom)
+        .filter(Loom.loom_type == "OutsidePowerloom")
+        .order_by(SareeEntry.date.desc())
+        .all()
+    )
+
+    # TAG SAREES
+    for s in sarees:
+        s.in_range = True if not filter_date else (s.date >= filter_date)
+
+    # GROUPING LOGIC
+    from collections import defaultdict
+    grouped = defaultdict(list)
+
+    for s in sarees:
+        key = s.date.strftime("%d-%m-%Y")
+        grouped[key].append(s)
+
+    grouped = dict(sorted(grouped.items(), reverse=True))
+
+    return render_template(
+        "sarees/outside_powerloom_sarees.html",
+        grouped_sarees=grouped,
+        selected_range=range_option
     )
