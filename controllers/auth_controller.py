@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash
 from models.user import User, Activity
 from app import db, mail
 from datetime import datetime
@@ -16,7 +17,7 @@ def send_otp_email(otp):
     admin_email = os.getenv("OTP_ADMIN_EMAIL")
 
     if not admin_email:
-        raise Exception("OTP_ADMIN_EMAIL is not set in environment variables!")
+        raise Exception("OTP_ADMIN_EMAIL is not set!")
 
     msg = Message(
         subject="BBBS Registration OTP",
@@ -29,7 +30,7 @@ def send_otp_email(otp):
 
 
 # ---------------------------------------------------
-# HOME / INDEX
+# HOME
 # ---------------------------------------------------
 @auth_bp.route('/')
 def index():
@@ -49,7 +50,7 @@ def login():
         password = request.form.get('password')
 
         if not email or not password:
-            flash('Please provide both email and password', 'error')
+            flash('Please provide email and password', 'danger')
             return render_template('login.html')
 
         user = User.query.filter_by(email=email).first()
@@ -60,20 +61,24 @@ def login():
 
             login_user(user)
 
-            db.session.add(Activity(user_id=user.id, username=user.username, action="login"))
+            db.session.add(Activity(
+                user_id=user.id,
+                username=user.username,
+                action="login"
+            ))
             db.session.commit()
 
             flash('Login successful!', 'success')
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('auth.dashboard'))
+            return redirect(next_page or url_for('auth.dashboard'))
 
-        flash('Invalid email or password', 'error')
+        flash('Invalid email or password', 'danger')
 
     return render_template('login.html')
 
 
 # ---------------------------------------------------
-# REGISTER (STEP 1 → SAVE DATA + SEND OTP)
+# REGISTER
 # ---------------------------------------------------
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -86,27 +91,23 @@ def register():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
+        confirm = request.form.get('confirm_password')
         role = request.form.get('role')
 
-        if not all([firstname, lastname, username, email, password, confirm_password, role]):
-            flash('All fields are required', 'error')
+        if not all([firstname, lastname, username, email, password, confirm, role]):
+            flash('All fields are required', 'danger')
             return render_template('register.html')
 
-        if password != confirm_password:
-            flash('Passwords do not match', 'error')
-            return render_template('register.html')
-
-        if len(password) < 6:
-            flash('Password must be at least 6 characters long', 'error')
+        if password != confirm:
+            flash('Passwords do not match', 'danger')
             return render_template('register.html')
 
         if User.query.filter_by(email=email).first():
-            flash('Email already exists', 'error')
+            flash('Email already exists', 'danger')
             return render_template('register.html')
 
         if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'error')
+            flash('Username already exists', 'danger')
             return render_template('register.html')
 
         otp = str(random.randint(100000, 999999))
@@ -121,63 +122,69 @@ def register():
         }
         session['reg_otp'] = otp
 
-        try:
-            send_otp_email(otp)
-            flash("OTP has been sent to admin email!", "info")
-        except Exception as e:
-            flash(f"OTP sending failed: {e}", "error")
-            return render_template('register.html')
+        send_otp_email(otp)
+        flash('OTP sent to admin email', 'info')
 
         return redirect(url_for('auth.verify_otp'))
 
     return render_template('register.html')
 
+@auth_bp.route('/activities')
+@login_required
+def activities():
+    if current_user.role != "owner":
+        flash("Access denied", "danger")
+        return redirect(url_for('auth.dashboard'))
+
+    activities = Activity.query.order_by(Activity.timestamp.desc()).all()
+    return render_template(
+        "activities.html",
+        activities=activities
+    )
 
 # ---------------------------------------------------
-# OTP VERIFICATION
+# OTP VERIFY
 # ---------------------------------------------------
 @auth_bp.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
     if request.method == 'POST':
-        entered_otp = request.form.get('otp')
-        correct_otp = session.get('reg_otp')
-        user_data = session.get('pending_user')
+        entered = request.form.get('otp')
+        stored = session.get('reg_otp')
+        data = session.get('pending_user')
 
-        if not entered_otp or not correct_otp:
-            flash("Session expired. Please register again.", "error")
+        if not entered or not stored or not data:
+            flash('Session expired', 'danger')
             return redirect(url_for('auth.register'))
 
-        if entered_otp != correct_otp:
-            flash("Invalid OTP! Please try again.", "error")
-            return render_template("verify_otp.html")
+        if entered != stored:
+            flash('Invalid OTP', 'danger')
+            return render_template('verify_otp.html')
 
-        try:
-            user = User(
-                firstname=user_data["firstname"],
-                lastname=user_data["lastname"],
-                username=user_data["username"],
-                email=user_data["email"],
-                role=user_data["role"]
-            )
+        user = User(
+            firstname=data['firstname'],
+            lastname=data['lastname'],
+            username=data['username'],
+            email=data['email'],
+            role=data['role']
+        )
 
-            user.set_password(user_data["password"])
-            db.session.add(user)
-            db.session.commit()
+        user.set_password(data['password'])
+        db.session.add(user)
+        db.session.commit()
 
-            db.session.add(Activity(user_id=user.id, username=user.username, action="register"))
-            db.session.commit()
+        db.session.add(Activity(
+            user_id=user.id,
+            username=user.username,
+            action="register"
+        ))
+        db.session.commit()
 
-            session.pop("reg_otp")
-            session.pop("pending_user")
+        session.clear()
 
-            flash("Registration successful! You can now login.", "success")
-            return redirect(url_for('auth.login'))
+        flash('Registration successful. Please login.', 'success')
+        return redirect(url_for('auth.login'))
 
-        except Exception:
-            db.session.rollback()
-            flash("Registration failed. Try again.", "error")
-
-    return render_template("verify_otp.html")
+    return render_template('verify_otp.html')
 
 
 # ---------------------------------------------------
@@ -187,33 +194,11 @@ def verify_otp():
 @login_required
 def dashboard():
     if current_user.role == "owner":
-        users = User.query.order_by(User.created_at.desc()).all()
-        recent_activities = Activity.query.order_by(Activity.timestamp.desc()).limit(5).all()
-        return render_template("dashboards/owner_dashboard.html", users=users, recent_activities=recent_activities)
+        users = User.query.all()
+        activities = Activity.query.order_by(Activity.timestamp.desc()).limit(5).all()
+        return render_template("dashboards/owner_dashboard.html", users=users, recent_activities=activities)
 
-    if current_user.role == "handloom_factory":
-        return render_template("dashboards/handloom_factory_dashboard.html")
-    if current_user.role == "outside_handloom":
-        return render_template("dashboards/outside_handloom_dashboard.html")
-    if current_user.role == "powerloom_factory":
-        return render_template("dashboards/powerloom_factory_dashboard.html")
-    if current_user.role == "outside_powerloom":
-        return render_template("dashboards/outside_powerloom_dashboard.html")
-
-    return "Invalid role assigned. Contact admin.", 403
-
-
-# ---------------------------------------------------
-# ACTIVITIES
-# ---------------------------------------------------
-@auth_bp.route('/activities')
-@login_required
-def activities():
-    if current_user.role != "owner":
-        return "Unauthorized", 403
-
-    logs = Activity.query.order_by(Activity.timestamp.desc()).all()
-    return render_template("dashboards/activities.html", activities=logs)
+    return render_template(f"dashboards/{current_user.role}_dashboard.html")
 
 
 # ---------------------------------------------------
@@ -232,77 +217,48 @@ def profile():
 @login_required
 def edit_profile():
     if request.method == 'POST':
-        firstname = request.form.get('firstname')
-        lastname = request.form.get('lastname')
-        username = request.form.get('username')
-        email = request.form.get('email')
+        current_user.firstname = request.form.get('firstname')
+        current_user.lastname = request.form.get('lastname')
+        current_user.username = request.form.get('username')
+        current_user.email = request.form.get('email')
 
-        if not all([firstname, lastname, username, email]):
-            flash('All fields are required', 'error')
-            return render_template('edit_profile.html')
-
-        if User.query.filter(User.username == username, User.id != current_user.id).first():
-            flash('Username already exists', 'error')
-            return render_template('edit_profile.html')
-
-        if User.query.filter(User.email == email, User.id != current_user.id).first():
-            flash('Email already exists', 'error')
-            return render_template('edit_profile.html')
-
-        try:
-            current_user.firstname = firstname
-            current_user.lastname = lastname
-            current_user.username = username
-            current_user.email = email
-            db.session.commit()
-
-            flash('Profile updated successfully!', 'success')
-            return redirect(url_for('auth.profile'))
-        except:
-            db.session.rollback()
-            flash('Profile update failed', 'error')
+        db.session.commit()
+        flash('Profile updated', 'success')
+        return redirect(url_for('auth.profile'))
 
     return render_template('edit_profile.html')
 
 
 # ---------------------------------------------------
-# CHANGE PASSWORD
+# CHANGE PASSWORD (LOGIN REQUIRED)
 # ---------------------------------------------------
-@auth_bp.route('/change_password', methods=['GET', 'POST'])
-@login_required
+@auth_bp.route('/change-password', methods=['GET', 'POST'])
 def change_password():
     if request.method == 'POST':
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
+        email = request.form.get('email')
+        new_password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
 
-        if not all([current_password, new_password, confirm_password]):
-            flash('All fields are required', 'error')
-            return render_template('change_password.html')
-
-        if not current_user.check_password(current_password):
-            flash('Current password incorrect', 'error')
-            return render_template('change_password.html')
+        if not email or not new_password or not confirm_password:
+            flash('All fields are required', 'danger')
+            return redirect(url_for('auth.change_password'))
 
         if new_password != confirm_password:
-            flash('New passwords do not match', 'error')
-            return render_template('change_password.html')
+            flash('Passwords do not match', 'danger')
+            return redirect(url_for('auth.change_password'))
 
-        if len(new_password) < 6:
-            flash('Password must be at least 6 characters long', 'error')
-            return render_template('change_password.html')
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash('User not found', 'danger')
+            return redirect(url_for('auth.change_password'))
 
-        try:
-            current_user.set_password(new_password)
-            db.session.commit()
+        user.set_password(new_password)   # ✅ consistent hashing
+        db.session.commit()
 
-            flash('Password changed successfully!', 'success')
-            return redirect(url_for('auth.profile'))
-        except:
-            db.session.rollback()
-            flash('Password change failed', 'error')
+        flash('Password updated successfully. Please login.', 'success')
+        return redirect(url_for('auth.login'))
 
-    return render_template('change_password.html')
+    return render_template('forgot_password.html')
 
 
 # ---------------------------------------------------

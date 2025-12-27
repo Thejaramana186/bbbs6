@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Activities{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-3">
+        <i class="fas fa-history me-2"></i>
+        User Activities
+    </h3>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Date & Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in activities %}
+            <tr>
+                <td>{{ a.username }}</td>
+                <td>{{ a.action }}</td>
+                <td>{{ a.timestamp.strftime('%d-%m-%Y %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
