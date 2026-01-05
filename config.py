@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from urllib.parse import quote_plus   # 👈 ADD THIS
 
 # =================================================
 # LOAD .env FIRST (FORCE OVERRIDE)
@@ -17,7 +18,8 @@ class Config:
     # DATABASE CONFIG
     # =================================================
     DB_USER = os.getenv("DB_USER")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    RAW_DB_PASSWORD = os.getenv("DB_PASSWORD")      # 👈 RAW password
+    DB_PASSWORD = quote_plus(RAW_DB_PASSWORD)       # 👈 ENCODE IT
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")
@@ -30,7 +32,15 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # =================================================
-    # EMAIL CONFIG (GMAIL)
+    # SQLALCHEMY CONNECTION SAFETY (RDS FIX)
+    # =================================================
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
+
+    # =================================================
+    # EMAIL CONFIG
     # =================================================
     MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
@@ -48,7 +58,7 @@ class Config:
     OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", 5))
 
 
-# ========== DEBUG PRINTS ==========
+# ========== SAFE DEBUG PRINT ==========
 print("========= CONFIG DEBUG =========")
 print("DB_HOST =", Config.DB_HOST)
 print("DB_PORT =", Config.DB_PORT)
@@ -56,5 +66,4 @@ print("DB_USER =", Config.DB_USER)
 print("DB_NAME =", Config.DB_NAME)
 print("FULL URI =", Config.SQLALCHEMY_DATABASE_URI)
 print("MAIL_USERNAME =", Config.MAIL_USERNAME)
-print("MAIL_PASSWORD =", Config.MAIL_PASSWORD)
 print("================================")

@@ -2223,8 +2223,8 @@ def create_outsideloom():
     if request.method == "POST":
         try:
             loom = Loom(
-                loom_no=generate_loom_no("Outsideloom"),
-                loom_type="Outsideloom",
+                loom_no=generate_loom_no("OutsideHandloom"),
+                loom_type="OutsideHandloom",
                 weaver_id=request.form.get("weaver_id"),
                 num_sarees=request.form.get("num_sarees"),
                 saree_type=request.form.get("saree_type"),
@@ -2250,7 +2250,8 @@ def create_outsideloom():
 @loom_bp.route('/outsidelooms')
 @login_required
 def outsidelooms():
-    looms = get_allowed_looms("Outsideloom")
+    looms = get_allowed_looms("OutsideHandloom")
+
     return render_template("outsidelooms.html", looms=looms)
 
 
